@@ -51,14 +51,63 @@ org 100h
     mov    bl,0
     int    10h
     
-	call drawTEST
+	call keyboard
 next:
 	call helloWorld
-	call waitESC
 	mov ah,4ch
 	int 21h
 helloWorld:
 	DispStr 10,10,strlen,strhello
+	ret
+keyboard:
+sloop:
+	mov ah,00h
+	int 16h
+	cmp al,77h
+	jz up
+	cmp al,73h
+	jz down
+	cmp al,61h
+	jz left
+	cmp al,64h
+	jz right
+	cmp al,1bh
+	jz next1
+	jmp sloop
+up:
+	dec word [m_y]
+	put_one_point    [m_x],[m_y],[m_color]
+	jmp sloop
+down:
+	inc word [m_y]
+	put_one_point    [m_x],[m_y],[m_color]
+	jmp sloop
+left:
+	dec word [m_x]
+	put_one_point    [m_x],[m_y],[m_color]
+	jmp sloop
+right:
+	inc word [m_x]
+	put_one_point    [m_x],[m_y],[m_color]
+	jmp sloop
+next1:
+	ret
+mouse:
+	mov al,60h
+	out 64h,al
+	mov al,01000011b
+	out 64h,al
+	
+	mov al,0a8h
+	out 64h,al
+	mov cx,800
+.1
+	push cx
+	mov ah,03h
+	int 33h
+	put_one_point    [m_x],[m_y],[m_color]
+	pop cx
+	jmp .1
 	ret
 waitESC:
 .1
