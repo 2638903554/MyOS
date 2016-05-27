@@ -98,9 +98,8 @@ str1: ; 字符串1（版权信息串）
 str1len equ $ - str1 ; 版权串长
 
 str2: ; 字符串2数组（命令行提示串）
-	db 'A:/$'
-str2len equ $ - str2 ; 提示串长
-	resb 20 
+	db 'A:/$                '
+str2len db 4 ; 提示串长
 str3: ; 字符串3（出错信息串）
 	db 'Wrong command!'
 str3len equ $ - str3 ; 错误命令串长
@@ -760,11 +759,29 @@ dir: ; 显示根目录文件
 	call ls			; 显示磁盘文件信息列表
 	ret				; 从例程返回
 ;--------------------------------------------------------------------
-cdToDir:   ;跳至子目录
-
+cdToDir:   ;跳至子目录    X:/子目录
+	pusha
 	mov cx,buflen
 	mov bp,buf
-	call DispStr
+	add bp,3   ;跳过cd  三个字符
+	push bp    ;保存bp
+	mov si,0
+.1  
+	cmp byte[bp],20h
+	jz .2
+	cmp byte[bp],20h
+	jz .2
+	inc si
+	jmp .1
+.2
+	pop bp
+	cld
+	mov cx,si
+	mov si,bp
+	mov di,str2
+	add di,3
+	rep movsb
+	popa
 	ret
 ;--------------------------------------------------------------------	
 edit:
@@ -887,7 +904,7 @@ prompt: ; 显示命令行系统提示串例程
 	mov bh, 0 		; 第0页
 	mov dl, 0 		; 第0列
 	mov bp, str2 	; BP=串地址
-	mov cx, str2len	; 串长
+	mov cx, [str2len]	; 串长
 	int 10h 		; 调用10H号中断
 	ret				; 从例程返回
 blank db 20h
