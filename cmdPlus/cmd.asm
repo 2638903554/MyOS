@@ -779,7 +779,7 @@ cdToDir:   ;跳至子目录    X:/子目录
 	mov cx,si
 	mov si,bp
 	mov di,str2
-	add di,3
+	add di,3               ;这里偏移是3 X:/
 	rep movsb
 	popa
 	ret
