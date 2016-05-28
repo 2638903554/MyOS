@@ -15,7 +15,7 @@ org 100h 		; 可编译成COM文件
 	mov word [cmdaddr + 6], tob	; B:  切换到B盘
 	mov word [cmdaddr + 8], toc	; C:  切换到C盘
 	mov word [cmdaddr + 10], dir; DIR 显示文件目录列表
-	mov word [cmdaddr + 12], dir; LS  显示文件目录列表
+	mov word [cmdaddr + 12], ls; LS  显示文件目录列表
 	mov word [cmdaddr + 14], help; HELP 显示帮助
 	mov word [cmdaddr + 16],cdToDir ;目录跳转
 	mov word [cmdaddr + 18], _dt; dt 显示时间
@@ -34,6 +34,7 @@ org 100h 		; 可编译成COM文件
 	call cls		; 清屏
 	call ver		; 显示版权信息
 	call intit16
+	call initialDisk ;初始化ls用到的扇区信息
 again: ; 命令行循环
 	call ver0		; 显示版权信息
 	call prompt		; 显示提示串
@@ -112,6 +113,10 @@ str3len equ $ - str3 ; 错误命令串长
 str4: ; 字符串4（串太长信息串）
 	db 'Too long!'
 str4len equ $ - str4 ; 太长串长
+
+str10: ; 字符串5（出错信息串）
+	db 'No such file or directory!'
+str10len equ $ - str10 ; 错误命令串长
 ; -------------------------------------------------------------------
 ; 命令行主程序结束
 ; ===================================================================
@@ -374,7 +379,22 @@ showwrong: ; 显示出错信息
 	mov cx, str3len	; 串长
 	int 10h 		; 调用10H号显示中断
 	ret				; 从例程返回
-	
+;--------------------------------------------------------------------
+showError1: ;显示出错信息 提示串长=cx ,提示串偏移=bp
+	; 获取当前光标位置（返回的行列号分别在DH和DL中）
+	mov ah, 3		; 功能号
+	mov bh, 0		; 第0页
+	int 10h 		; 调用10H号显示中断
+	; 显示出错信息串
+	mov ah, 13h 	; 功能号
+	mov al, 1 		; 光标放到串尾
+	mov bl, 0fh 	; 亮白
+	mov bh, 0 		; 第0页
+	mov dl, 0 		; 第0列
+	mov bp, str10 	; BP=串地址
+	mov cx, str10len	; 串长
+	int 10h 		; 调用10H号显示中断
+	ret				; 从例程返回
 ; -------------------------------------------------------------------
 showtoolong: ; 显示太长信息
 	call newline 	; 回车换行
@@ -753,6 +773,9 @@ toa: ; 改为A盘
 	mov ah, 3		; 功能号
 	mov bh, 0		; 第0页
 	int 10h 		; 调用10H号中断
+
+    call initialDisk
+	
 	jmp again		; 重新开始
 	
 ; -------------------------------------------------------------------
@@ -778,6 +801,9 @@ tob: ; 改为B盘
 	mov ah, 3		; 功能号
 	mov bh, 0		; 第0页
 	int 10h 		; 调用10H号中断
+	
+	call initialDisk
+	
 	jmp again		; 重新开始
 
 ; -------------------------------------------------------------------
@@ -803,18 +829,42 @@ toc: ; 改为C盘
 	mov ah, 3		; 功能号
 	mov bh, 0		; 第0页
 	int 10h 		; 调用10H号中断
+	
+	call initialDisk
+	
 	jmp again		; 重新开始
+
+;---------------------------------------------------------------------
+initialDisk;        ;初始化ls用到的参数
+	pusha
+	call ReadPBootSec
+	; nsec为根目录区剩余扇区数，初始化为根目录扇区数，在循环中会递减至零
+	; 计算根目录扇区数（ = 最大根目录项数 / 32）
+	mov ax, [Sector + 11h]	; AX = 最大根目录项数
+	shr ax, 4				; AX右移4位（~ /32） = 根目录扇区数
+	mov word [nsec], ax		; nsec = AX = 根目录扇区数
+
+	; isec为当前扇区号，赋初值为根目录区的首扇区号，在循环中会逐个增加
+	; 计算根目录首扇区号（= 保留扇区数 + FAT数 * FAT占扇区数）
+	movzx ax, byte [Sector + 10h] ; AX = FAT数
+	mul word [Sector + 16h]	; AX *= FAT占扇区数
+	add ax, [Sector + 0Eh]	; AX += 保留扇区数
+	mov [isec],ax			; isec = AX = 根目录首扇区号
+	popa
+	ret
 ;--------------------------------------------------------------------
 dir: ; 显示根目录文件
 	call showbpb	; 显示磁盘信息
 	call ls			; 显示磁盘文件信息列表
 	ret				; 从例程返回
 ;--------------------------------------------------------------------
-cdToDir:   ;跳至子目录    X:/$子目录
-; 定义常量（磁盘参数）
-CurrentDirSectors	equ	14		; 当前目录占用的扇区数
-SectorNoOfCurrentDirectory	equ	19	; 当前目录区的首扇区号
+; 定义变量（磁盘参数）
+CurrentDirSectors	dw	14		; 当前目录占用的扇区数
+SectorNoOfCurrentDirectory	dw	19	; 当前目录区的首扇区号
+iCurrentDirSectors  dw 0       ;待计算的下一目录所占扇区数
 Dir_len dw 0
+cdToDir:   ;跳至子目录    X:/$子目录
+
 	pusha
 	mov cx,buflen
 	mov bp,buf
@@ -833,7 +883,7 @@ Dir_len dw 0
 	jmp .1
 .2
 	pop bp
-	cmp si,8
+	cmp si,11
 	jg dir_out
 	mov [Dir_len],si
 	mov di,Dirbuf
@@ -856,14 +906,16 @@ Dir_len dw 0
 	xor	dl, dl	; dl=0（软驱A，软驱B为1、硬盘和U盘为80h）
 	int	13h		; 磁盘中断
 	
-; 下面在磁盘根目录中寻找子目录
-	mov	word [wSectorNo], SectorNoOfCurrentDirectory 	; 给表示当前扇区号的
+; 下面在当前目录中寻找子目录
+	mov ax,[SectorNoOfCurrentDirectory]
+	mov	word [wSectorNo], ax 	; 给表示当前扇区号的
 						; 变量wSectorNo赋初值为根目录区的首扇区号（=19）
-	mov word [wRootDirSizeForLoop], CurrentDirSectors	; 根目录区剩余扇区数
+	mov ax,[CurrentDirSectors]
+	mov word [wRootDirSizeForLoop], ax	; 根目录区剩余扇区数
 										; 初始化为14，在循环中会递减至零
 LABEL_SEARCH_IN_Current_DIR_BEGIN:
 	cmp	word [wRootDirSizeForLoop], 0 ; 判断根目录区是否已读完
-	jz	VOL_NOT_FOUND	; 若读完则表示未找到COM文件
+	jz	VOL_NOT_FOUND	; 若读完则表示未找到目录项
 	dec	word [wRootDirSizeForLoop]	; 递减变量wRootDirSizeForLoop的值
 	; 调用读扇区函数读入一个根目录扇区到装载区
 	mov	ax, BaseOfLoader
@@ -873,7 +925,7 @@ LABEL_SEARCH_IN_Current_DIR_BEGIN:
 	mov	cl, 1			; 只读一个扇区
 	call ReadSec		; 调用读扇区函数
 
-	mov	si, Dirbuf		; DS:SI -> COM文件
+	mov	si, Dirbuf		; DS:SI -> 目录项
 	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
 	cld					; 清除DF标志位
 						; 置比较字符串时的方向为左/上[索引增加]
@@ -882,11 +934,11 @@ VOL_SEARCH_FOR_VOL_FILE:
 	cmp	dx, 0			; 循环次数控制
 	jz LABEL_GOTO_NEXT_SECTOR_IN_Current_DIR ; 若已读完一扇区
 	dec	dx				; 递减循环次数值			  就跳到下一扇区
-	mov	cx,8 			; 初始循环次数为11
+	mov	cx,[Dir_len] 	; 初始循环次数为11
 VOL_CMP_FILENAME:
 	repe cmpsb			; 重复比较字符串中的字符，CX--，直到不相等或CX=0
 	cmp	cx, 0
-	jz	LABEL_VOL_FOUND ; 如果比较了8个字符都相等，表示找到
+	jz	LABEL_VOL_FOUND ; 如果比较了11个字符都相等，表示找到
 VOL_DIFFERENT:
 	and	di, 0FFE0h		; DI &= E0为了让它指向本条目开头（低5位清零）
 						; FFE0h = 1111111111100000（低5位=32=目录条目大小）
@@ -900,12 +952,73 @@ LABEL_GOTO_NEXT_SECTOR_IN_Current_DIR:
 
 VOL_NOT_FOUND:
 	pop es			; 恢复ES
-	call showwrong	; 显示字符串
+	call showError1	; 显示字符串
 	jmp dir_out
 ;------------------------------------------------------+
-LABEL_VOL_FOUND:
+LABEL_VOL_FOUND:           ;aaa
+	
+	; 计算文件的起始扇区号
+	mov	ax, [CurrentDirSectors]	; AX=当前目录占用的扇区数
+	and	di, 0FFE0h		; DI -> 当前条目的开始地址
+	add	di, 1Ah			; DI -> 子目录的首扇区号在条目中的偏移地址
+	mov cx, word [es:di] ; CX=子目录的首扇区号
+	;mov word[SectorNoOfCurrentDirectory],cx ;修改当前目录的首扇区号
 	pop es
+	
+	
+	mov word [nsec],1
+	mov word [isec],cx
+	add word [isec],1fh
+	jmp VOL_FILE_LOADED
 	pusha
+	push cx				; 保存此扇区在FAT中的序号
+	add	cx, ax			; CX=文件的相对起始扇区号+当前目录占用的扇区数
+	add	cx, DeltaSectorNo ; CL <- 目录项的起始扇区号(0-based)
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader（COM程序基址=4000h）
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader（COM程序偏移地址=100h）
+	mov	ax, cx			; AX <- 起始扇区号	
+VOL_GOON_SETTING_PARAM: ;设置当前目录的扇区数和首扇区号
+	push bx				; 保存COM程序偏移地址
+	mov	cl, 1			; 1个扇区
+	call ReadSec		; 读扇区
+	inc word [iCurrentDirSectors]
+	; 计算子目录所占的扇区数
+	pop bx				; 取出目录偏移地址
+	pop	ax				; 取出此扇区在FAT中的序号
+	call GetFATEntry	; 获取FAT项中的下一簇号
+	cmp	ax, 0FF8h		; 是否是目录的最后簇
+	jae	VOL_FILE_LOADED ; ≥FF8h时跳转，否则读下一个簇
+	push ax				; 保存扇区在FAT中的序号
+	mov	dx, [CurrentDirSectors] ; DX = 当前目录扇区数
+	add	ax, dx			; 扇区序号 + 当前目录扇区数
+	add	ax, DeltaSectorNo ; AX = 要读的数据扇区地址
+	add	bx, [BPB_BytsPerSec] ; BX+512指向子目录条目区的下一个扇区地址
+	
+	jmp VOL_GOON_SETTING_PARAM
+VOL_FILE_LOADED:
+	jmp nextdir
+	mov ax,[iCurrentDirSectors]
+    mov word [CurrentDirSectors],ax
+	push cx
+	mov cx,[iCurrentDirSectors]
+	pusha
+	; 显示高4位
+	mov al, cl		; AL=ID高位字节
+	and al, 0F0h	; 取出高4位
+	shr al, 4		; AL >> 4
+	call ShowChar	; 调用显示字符函数
+	; 显示低4位
+	mov al, cl		; AL=ID高位字节
+	and al, 0Fh		; 取出低4位
+	call ShowChar	; 调用显示字符函数
+	popa
+	pop cx
+nextdir:
+	popa
+	pusha               ;设置新的目录 提示串
+	mov ax,ds
+	mov es,ax
 	mov si,[Dir_len]
 	mov di,str2
 	add di,[str2len]
@@ -914,7 +1027,7 @@ LABEL_VOL_FOUND:
 	inc word [str2len]
 	cld
 	mov cx,si
-	mov si,bp
+	mov si,Dirbuf
 	rep movsb
 	mov al,'/'
 	stosb
@@ -924,17 +1037,22 @@ LABEL_VOL_FOUND:
 	jmp dir_out
 	
 backToRoot
+	mov word [CurrentDirSectors],14
+	mov word [SectorNoOfCurrentDirectory],19
+	
 	mov di,str2
 	add di,3
 	mov al,'$'
 	stosb
 	mov byte[str2len],4
+	call initialDisk
 dir_out
 	
 	mov cx,11
-	mov al,0
+	mov al,20h
 	mov di,Dirbuf
 	rep stosb
+	mov word[Dir_len],0
 	; 获取当前光标位置（返回的行列号分别在DH和DL中）
 	mov ah, 3		; 功能号
 	mov bh, 0		; 第0页
@@ -1697,18 +1815,9 @@ ReadSec:
 ; 作用：; 显示磁盘根目录文件信息列表
 ; 需使用磁盘参数secspt(每磁道扇区数）和heads(磁头数）
 ls: 
-	; nsec为根目录区剩余扇区数，初始化为根目录扇区数，在循环中会递减至零
-	; 计算根目录扇区数（ = 最大根目录项数 / 32）
-	mov ax, [Sector + 11h]	; AX = 最大根目录项数
-	shr ax, 4				; AX右移4位（~ /32） = 根目录扇区数
-	mov word [nsec], ax		; nsec = AX = 根目录扇区数
-
-	; isec为当前扇区号，赋初值为根目录区的首扇区号，在循环中会逐个增加
-	; 计算根目录首扇区号（= 保留扇区数 + FAT数 * FAT占扇区数）
-	movzx ax, byte [Sector + 10h] ; AX = FAT数
-	mul word [Sector + 16h]	; AX *= FAT占扇区数
-	add ax, [Sector + 0Eh]	; AX += 保留扇区数
-	mov [isec], ax			; isec = AX = 根目录首扇区号
+	;mov word[nsec],1
+	;mov word[isec],1fh
+	;add word[isec], 47h			
 	
 	;call getdiskparam	; 获取磁盘参数H&S
 	; 获取磁盘参数H/S
@@ -1717,6 +1826,10 @@ ls:
 	;mov ax, [Sector + 1Ah]	; AX = 磁头数
 	;mov [heads], ax			; heads = AX = 磁头数
 	; 对硬盘isec需加第1个柱面的扇区数
+	mov ax,[isec]
+	mov [isec_ls],ax
+	mov ax,[nsec]
+	mov [nsec_ls],ax
 	cmp byte [drvno], 80h	; 驱动器号=80h（硬盘C）？
 	je hdc					; = 80h 跳转
 	jmp begain				; 软盘
@@ -1724,17 +1837,17 @@ hdc: ; 硬盘C
 	; 计算分区前的扇区数（假设 = 1个柱面扇区数）= 每磁道扇区数 * 磁头数
 	mov ax, [secspt] 		; AX = 每磁道扇区数
 	mul word [heads]		; AX *= 磁头数 = 1个柱面扇区数
-	add [isec], ax			; isec += 1个柱面扇区数 = 硬盘根目录首扇区号
+	add [isec_ls], ax			; isec += 1个柱面扇区数 = 硬盘根目录首扇区号
 
 begain: 
 	; 下面在磁盘根目录中寻找文件目录条目
 searchrdir: ; 搜索根目录循环（逐个读入根目录扇区）
-	cmp	word [nsec], 0	; 判断根目录区是否已读完
+	cmp	word [nsec_ls], 0	; 判断根目录区是否已读完
 	jz	exit			; 若读完则退出
-	dec	word [nsec]		; nsec--
+	dec	word [nsec_ls]		; nsec--
 	; 调用读扇区函数读入一个根目录扇区到缓冲区
 	mov	bx, Sector		; BX = Sector
-	mov	ax, [isec]		; AX <- 根目录中的当前扇区号
+	mov	ax, [isec_ls]		; AX <- 根目录中的当前扇区号
 	mov cl, 1			; 读一个扇区到缓冲区
 	call ReadSec		; 调用读扇区函数
 	
@@ -1914,7 +2027,7 @@ notfi:
 	jmp	searchfi		; 转到循环开始处
 
 nextsec:
-	inc	word [isec] 	; 递增当前扇区号
+	inc	word [isec_ls] 	; 递增当前扇区号
 	jmp	searchrdir		; 继续搜索根目录循环
 
 exit: ; 终止程序，返回
@@ -1954,7 +2067,8 @@ exit: ; 终止程序，返回
 	call DispStr		; 显示字符串
 	mov dword[FileSize],0     ;显示完清零计数器
 	ret
-	
+isec_ls dw 0;当前扇区（用于ls）	
+nsec_ls dw 0;剩余扇区数（用于ls）
 isec dw 0	; 当前扇区号
 nsec dw 0	; 剩余扇区数
 lns dw 0	; 定义行数，初值为0
