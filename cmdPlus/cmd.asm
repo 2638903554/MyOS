@@ -1,63 +1,78 @@
-org 100h 		; å¯ç¼–è¯‘æˆCOMæ–‡ä»¶
+org 100h 		; ¿É±àÒë³ÉCOMÎÄ¼þ
 ; ===================================================================
-; å‘½ä»¤è¡Œä¸»ç¨‹åºå¼€å§‹
+; ÃüÁîÐÐÖ÷³ÌÐò¿ªÊ¼
 ;--------------------------------------------------------------------	
-	; é€šè¿‡AXä¸­è½¬ï¼Œå°†CSçš„å€¼èµ‹ç»™DSã€ESå’ŒSS
+	; Í¨¹ýAXÖÐ×ª£¬½«CSµÄÖµ¸³¸øDS¡¢ESºÍSS
 	mov ax, cs
 	mov ds, ax
 	mov es, ax
 	mov ss, ax
-	mov sp, 100h - 4	; ç½®æ ˆé¡¶æŒ‡é’ˆSP=100h-4
-	; åˆå§‹åŒ–å†…éƒ¨å‘½ä»¤ä¾‹ç¨‹å…¥å£åœ°å€
-	mov word [cmdaddr], ver		; VER æ˜¾ç¤ºç‰ˆæƒä¿¡æ¯
-	mov word [cmdaddr + 2], cls	; CLS æ¸…å±
-	mov word [cmdaddr + 4], toa	; A:  åˆ‡æ¢åˆ°Aç›˜
-	mov word [cmdaddr + 6], tob	; B:  åˆ‡æ¢åˆ°Bç›˜
-	mov word [cmdaddr + 8], toc	; C:  åˆ‡æ¢åˆ°Cç›˜
-	mov word [cmdaddr + 10], dir; DIR æ˜¾ç¤ºæ–‡ä»¶ç›®å½•åˆ—è¡¨
-	mov word [cmdaddr + 12], ls; LS  æ˜¾ç¤ºæ–‡ä»¶ç›®å½•åˆ—è¡¨
-	mov word [cmdaddr + 14], help; HELP æ˜¾ç¤ºå¸®åŠ©
-	mov word [cmdaddr + 16],cdToDir ;ç›®å½•è·³è½¬
-	mov word [cmdaddr + 18], _dt; dt æ˜¾ç¤ºæ—¶é—´
-	mov word [cmdaddr + 20], _dc; dc æ˜¾ç¤ºæ—¶é—´	
-	mov word [cmdaddr + 22], edit
+	mov sp, 100h - 4	; ÖÃÕ»¶¥Ö¸ÕëSP=100h-4
+	mov ax,12h    ;640*480 mode
+	int 10h       ;ÉèÖÃ640*480/16É«ÏÔÊ¾Ä£Ê½
+	; ³õÊ¼»¯ÄÚ²¿ÃüÁîÀý³ÌÈë¿ÚµØÖ·
+	mov word [cmdaddr], ver		; VER ÏÔÊ¾°æÈ¨ÐÅÏ¢
+	mov word [cmdaddr + 2], cls	; CLS ÇåÆÁ
+	mov word [cmdaddr + 4], toa	; A:  ÇÐ»»µ½AÅÌ
+	mov word [cmdaddr + 6], tob	; B:  ÇÐ»»µ½BÅÌ
+	mov word [cmdaddr + 8], toc	; C:  ÇÐ»»µ½CÅÌ
+	mov word [cmdaddr + 10], dir; DIR ÏÔÊ¾ÎÄ¼þÄ¿Â¼ÁÐ±í
+	mov word [cmdaddr + 12], ls; LS  ÏÔÊ¾ÎÄ¼þÄ¿Â¼ÁÐ±í
+	mov word [cmdaddr + 14], help; HELP ÏÔÊ¾°ïÖú
+	mov word [cmdaddr + 16],cdToDir ;Ä¿Â¼Ìø×ª
+	mov word [cmdaddr + 18], _dt; dt ÏÔÊ¾Ê±¼ä
+	mov word [cmdaddr + 20], _dc; dc ÏÔÊ¾Ê±¼ä	
+	mov word [cmdaddr + 22], rename
 	mov word [cmdaddr + 24], mkdir
-	; è®¾ç½®ä¸­æ–­å‘é‡ï¼ˆ21hï¼‰
+	mov word [cmdaddr + 26], ReadMemmory
+	mov word [cmdaddr + 28], HZK16_test
+	mov word [cmdaddr + 30], SignIn
+	mov word [cmdaddr + 32], Restart
+	mov word [cmdaddr + 34], ChangePassword
+	mov word [cmdaddr + 36], ChangeUserName
+	; ÉèÖÃÖÐ¶ÏÏòÁ¿£¨21h£©
 	xor ax, ax		; AX = 0
 	mov fs, ax		; FS = 0
-	mov word[fs:21h*4], int21h ; è®¾ç½®21hå·ä¸­æ–­å‘é‡çš„åç§»åœ°å€
+	mov word[fs:21h*4], int21h ; ÉèÖÃ21hºÅÖÐ¶ÏÏòÁ¿µÄÆ«ÒÆµØÖ·
 	mov ax,cs 
-	mov [fs:21h*4+2], ax ; è®¾ç½®21hå·ä¸­æ–­å‘é‡çš„æ®µåœ°å€=CS
-
-	call getdiskparam	; èŽ·å–ç£ç›˜å‚æ•°H&Sï¼ˆç”¨äºŽReadSecå’Œlsä¾‹ç¨‹ï¼‰
-	
-	call cls		; æ¸…å±
-	call ver		; æ˜¾ç¤ºç‰ˆæƒä¿¡æ¯
-	call intit16
-	call initialDisk ;åˆå§‹åŒ–lsç”¨åˆ°çš„æ‰‡åŒºä¿¡æ¯
-again: ; å‘½ä»¤è¡Œå¾ªçŽ¯
-	call ver0		; æ˜¾ç¤ºç‰ˆæƒä¿¡æ¯
-	call prompt		; æ˜¾ç¤ºæç¤ºä¸²
-	call getstrln	; èŽ·å–é”®ç›˜è¾“å…¥çš„å‘½ä»¤ä¸²è¡Œ
-	call dtlen		; ç¡®å®šå‘½ä»¤ä¸²é•¿åº¦
-	call tocap		; è½¬æ¢æˆå¤§å†™å­—æ¯
-	call newstr		; æž„é€ æ–°ä¸²
-	call iscmd		; åˆ¤æ–­æ˜¯å¦ä¸ºå†…éƒ¨å‘½ä»¤ï¼Œå¦‚æžœæ˜¯ï¼Œåˆ™æ‰§è¡Œä¹‹ï¼Œå¦åˆ™ï¼š
-	call newline	; å›žè½¦æ¢è¡Œ
-	call exec		; æ‰§è¡Œå¤–éƒ¨å‘½ä»¤ï¼ˆCOMæ–‡ä»¶ï¼‰
-	jmp again		; ç»§ç»­å¾ªçŽ¯
+	mov [fs:21h*4+2], ax ; ÉèÖÃ21hºÅÖÐ¶ÏÏòÁ¿µÄ¶ÎµØÖ·=CS
+	call Store_dc
+	call getdiskparam	; »ñÈ¡´ÅÅÌ²ÎÊýH&S£¨ÓÃÓÚReadSecºÍlsÀý³Ì£©
+	call cls		; ÇåÆÁ
+	call initialDisk ;³õÊ¼»¯lsÓÃµ½µÄÉÈÇøÐÅÏ¢
+	call int213dh
+	call cls
+	call ver		; ÏÔÊ¾°æÈ¨ÐÅÏ¢
+	;call waitforkey_chin
+	call cls		; ÇåÆÁ
+	call SignIn
+	call cls		; ÇåÆÁ
+	;call ver		; ÏÔÊ¾°æÈ¨ÐÅÏ¢
+again: ; ÃüÁîÐÐÑ­»·
+	call BackToCmd
+	;call ver0		; ÏÔÊ¾°æÈ¨ÐÅÏ¢
+	call prompt		; ÏÔÊ¾ÌáÊ¾´®
+	call getstrln	; »ñÈ¡¼üÅÌÊäÈëµÄÃüÁî´®ÐÐ
+	call dtlen		; È·¶¨ÃüÁî´®³¤¶È
+	call tocap		; ×ª»»³É´óÐ´×ÖÄ¸
+	call newstr		; ¹¹ÔìÐÂ´®
+	call Shut_dc
+	call iscmd		; ÅÐ¶ÏÊÇ·ñÎªÄÚ²¿ÃüÁî£¬Èç¹ûÊÇ£¬ÔòÖ´ÐÐÖ®£¬·ñÔò£º
+	call newline	; »Ø³µ»»ÐÐ
+	call exec		; Ö´ÐÐÍâ²¿ÃüÁî£¨COMÎÄ¼þ£©
+	jmp again		; ¼ÌÐøÑ­»·
 	
 ;--------------------------------------------------------------------
-; å®šä¹‰å˜é‡ã€æ•°ç»„ã€ç¼“å†²åŒºå’Œå­—ç¬¦ä¸²
+; ¶¨Òå±äÁ¿¡¢Êý×é¡¢»º³åÇøºÍ×Ö·û´®
 
-drvno db 0 ; ç£ç›˜é©±åŠ¨å™¨å·ï¼š0=è½¯ç›˜Aã€1=è½¯ç›˜Bã€80h=ç¡¬ç›˜C
-i dw 0 ; å¾ªçŽ¯å˜é‡
-n dw 0 ; å‘½ä»¤ä¸²é•¿åº¦
+drvno db 0 ; ´ÅÅÌÇý¶¯Æ÷ºÅ£º0=ÈíÅÌA¡¢1=ÈíÅÌB¡¢80h=Ó²ÅÌC
+i dw 0 ; Ñ­»·±äÁ¿
+n dw 0 ; ÃüÁî´®³¤¶È
 
-N equ 13	; å†…éƒ¨å‘½ä»¤æ€»æ•°
-cslen equ 8 ; å‘½ä»¤ä¸²æœ€å¤§é•¿åº¦
+N equ 19	; ÄÚ²¿ÃüÁî×ÜÊý
+cslen equ 8 ; ÃüÁî´®×î´ó³¤¶È
 
-cmdstr: ; å†…éƒ¨å‘½ä»¤ä¸²æ•°ç»„ï¼ˆç»Ÿä¸€ä¸²é•¿ä¸º8ï¼Œä¸è¶³è¡¥ç©ºæ ¼ç¬¦ï¼‰
+cmdstr: ; ÄÚ²¿ÃüÁî´®Êý×é£¨Í³Ò»´®³¤Îª8£¬²»×ã²¹¿Õ¸ñ·û£©
 	db 'VER     '
 	db 'CLS     '
 	db 'A:      '
@@ -69,9 +84,15 @@ cmdstr: ; å†…éƒ¨å‘½ä»¤ä¸²æ•°ç»„ï¼ˆç»Ÿä¸€ä¸²é•¿ä¸º8ï¼Œä¸è¶³è¡¥ç©ºæ ¼ç¬¦ï¼‰
 	db 'CD      '
 	db 'DT      '
 	db 'DC      '
-	db 'EDIT    '
+	db 'RENAME  '
 	db 'MKDIR   '
-cmdHelpStr:  ;å†…éƒ¨å‘½ä»¤è§£é‡Šç»Ÿä¸€ä¸²é•¿30
+	db 'READMEM '
+	db 'CHINESE '
+	db 'LOCK    '
+	db 'RESTART '
+	db 'CPASS   '
+	db 'CUSER   '
+cmdHelpStr:  ;ÄÚ²¿ÃüÁî½âÊÍÍ³Ò»´®³¤30
 	db 'Show OS verion&OEM Info.      '
 	db 'Clear screen.                 '
 	db 'Switch to disk A (floppy).    '
@@ -83,797 +104,655 @@ cmdHelpStr:  ;å†…éƒ¨å‘½ä»¤è§£é‡Šç»Ÿä¸€ä¸²é•¿30
 	db 'Change current directory.     '
 	db 'Display time                  '
 	db 'Display time(EN/US format).   '
-	db 'Text edit.                    '
-	db 'Make directory.               '
-cmdaddr: ; å†…éƒ¨å‘½ä»¤ä¾‹ç¨‹å…¥å£åœ°å€æ•°ç»„
+	db 'Rename file name.                    '
+	db 'Make Directory.             '
+	db 'Read 16 byte memory in x:x.   '
+	db 'Display Chinese Chararcter.   '
+	db 'Lock screen                   '
+cmdHelpStr_chin:  ;ÄÚ²¿ÃüÁî½âÊÍÍ³Ò»´®³¤30
+	db 'ÏÔÊ¾ÏµÍ³°æ±¾                  '
+	db 'ÇåÆÁ                          '
+	db '¸Ä±äÄ¿Â¼ÖÁÏµÍ³ÅÌ¸ùÄ¿Â¼        '
+	db '¸Ä±äÄ¿Â¼ÖÁ¶þºÅÈíÅÌ¸ùÄ¿Â¼      '
+	db '¸Ä±äÄ¿Â¼ÖÁÓ²ÅÌ¸ùÄ¿Â¼          '
+	db 'ÏÔÊ¾µ±Ç°Ä¿Â¼                  '
+	db 'ÏÔÊ¾ËùÓÐµ±Ç°Ä¿Â¼ÎÄ¼þÌõÄ¿      '
+	db 'ÏÔÊ¾°ïÖúÐÅÏ¢                  '
+	db '¸Ä±äµ±Ç°Ä¿Â¼                  '
+	db 'ÏÔÊ¾µ±Ç°Ê±¼ä                  '
+	db 'ÊµÊ±Ê±¼ä                      '
+	db 'ÖØÃüÃûÎÄ¼þ                    '
+	db '´´½¨ÎÄ¼þ¼Ð                    '
+	db '¶ÁÈ¡ÄÚ´æ                      '
+	db 'ºº×ÖÑÝÊ¾                      '
+	db 'ËøÆÁ                          '
+	db 'ÖØÆô                          '
+	db 'ÐÞ¸ÄÃÜÂë                      '
+	db 'ÐÞ¸ÄÓÃ»§Ãû                    '
+cmdaddr: ; ÄÚ²¿ÃüÁîÀý³ÌÈë¿ÚµØÖ·Êý×é
 	resw N
 
-fnbuf: ; COMæ–‡ä»¶åä¸²ï¼ˆ8+3=11å­—ç¬¦ï¼‰
+fnbuf: ; COMÎÄ¼þÃû´®£¨8+3=11×Ö·û£©
 	db '12345678COM'
 
-Dirbuf ; ç›®å½•åä¸²ï¼ˆ8+3=11å­—ç¬¦ï¼‰
+Dirbuf: ; Ä¿Â¼Ãû´®£¨8+3=11×Ö·û£©
 	db '           '
-buflen equ 80 ; ç¼“å†²åŒºé•¿åº¦=80
+buflen: equ 80 ; »º³åÇø³¤¶È=80
 
-buf resb buflen ; å‘½ä»¤è¡Œç¼“å†²åŒº
+buf: resb buflen ; ÃüÁîÐÐ»º³åÇø
  
-str1: ; å­—ç¬¦ä¸²1ï¼ˆç‰ˆæƒä¿¡æ¯ä¸²ï¼‰
-	db 'MyOS 1.x  (C) 2016 Liao WeiMing'
-str1len equ $ - str1 ; ç‰ˆæƒä¸²é•¿
+str1: ; ×Ö·û´®1£¨°æÈ¨ÐÅÏ¢´®£©
+	db 'BigBoom-OS 2.0  (C) 2016 Big Firecrackers'
+str1len equ $ - str1 ; °æÈ¨´®³¤
 
-str2: ; å­—ç¬¦ä¸²2æ•°ç»„ï¼ˆå‘½ä»¤è¡Œæç¤ºä¸²ï¼‰
+str2: ; ×Ö·û´®2Êý×é£¨ÃüÁîÐÐÌáÊ¾´®£©
 	db 'A:/$'
-	resb 80   ;å­ç›®å½•ç¼“å†²åŒº
-str2len: dw 4 ; æç¤ºä¸²é•¿
+	resb 80   ;×ÓÄ¿Â¼»º³åÇø
+str2len: dw 4 ; ÌáÊ¾´®³¤
 
-str3: ; å­—ç¬¦ä¸²3ï¼ˆå‡ºé”™ä¿¡æ¯ä¸²ï¼‰
+str3: ; ×Ö·û´®3£¨³ö´íÐÅÏ¢´®£©
 	db 'Wrong command!'
-str3len equ $ - str3 ; é”™è¯¯å‘½ä»¤ä¸²é•¿
+str3len equ $ - str3 ; ´íÎóÃüÁî´®³¤
 
-str4: ; å­—ç¬¦ä¸²4ï¼ˆä¸²å¤ªé•¿ä¿¡æ¯ä¸²ï¼‰
+str3_chin: ; ×Ö·û´®3£¨³ö´íÐÅÏ¢´®£©
+	db '²»ÊÇÄÚ²¿»òÍâ²¿ÃüÁî£¬Ò²²»ÊÇ¿ÉÔËÐÐµÄ³ÌÐò'
+str3len_chin equ ($ - str3_chin)/2 ; ´íÎóÃüÁî´®³¤
+
+str4: ; ×Ö·û´®4£¨´®Ì«³¤ÐÅÏ¢´®£©
 	db 'Too long!'
-str4len equ $ - str4 ; å¤ªé•¿ä¸²é•¿
+str4len equ $ - str4 ; Ì«³¤´®³¤
+str4_chin: ; ×Ö·û´®3£¨³ö´íÐÅÏ¢´®£©
+	db 'ÃüÁîÌ«³¤'
+str4len_chin equ ($ - str4_chin)/2 ; ´íÎóÃüÁî´®³¤
 
-str10: ; å­—ç¬¦ä¸²5ï¼ˆå‡ºé”™ä¿¡æ¯ä¸²ï¼‰
+str10: ; ×Ö·û´®5£¨³ö´íÐÅÏ¢´®£©
 	db 'No such file or directory!'
-str10len equ $ - str10 ; é”™è¯¯å‘½ä»¤ä¸²é•¿
+str10len equ $ - str10 ; ´íÎóÃüÁî´®³¤
+str10_chin: ; ×Ö·û´®3£¨³ö´íÐÅÏ¢´®£©
+	db 'Ã»ÓÐÄÇ¸öÎÄ¼þ»òÄ¿Â¼'
+str10len_chin equ ($ - str10_chin)/2 ; ´íÎóÃüÁî´®³¤
+
+str11_chin: ; ×Ö·û´®4£¨³ö´íÐÅÏ¢´®£©
+	db 'ÎÄ¼þ¼ÐÒÑ´æÔÚ'
+str11len_chin equ ($ - str11_chin)/2 ; ÖØ¸´ÌõÄ¿
 ; -------------------------------------------------------------------
-; å‘½ä»¤è¡Œä¸»ç¨‹åºç»“æŸ
+; ÃüÁîÐÐÖ÷³ÌÐò½áÊø
 ; ===================================================================
-;===============================int16håˆå§‹åŒ–=========================
-intit16:
+; Ð¡ÐÍ¸¨ÖúÀý³Ì¿ªÊ¼
+; ¶¯»­=================================================================================================================
+head1 db	'   ;59935,  ,,:;iirrii:,,.    ...    '
+head2 db	'  3#@@@@@#3srr;::,,,,:,:irs;5XHBHXS. '
+head3 db	' i@##@#@@8:               .:3@@@@@@H,'
+head4 db	' s@###@Hi                    ;B@#@#@h'
+head5 db	'  8@@@&.                      :M@@@@r'
+head6 db	'   rG&.      .,:rh3Sr;i,;5991. iMMA1 '
+head7 db	'    i;       ,13GS3M&h;1BM33h   1r   '
+head8 db	'   ;1         ..:ii;.  .iii.    ;S   '
+head9 db	'  .3,             .      .      .S   '
+head10 db	'.iH3          .isr,.;srrs:r;     93  '
+head11 db	'G#@G          ,1r. .:hShi.::     8@G '
+head12 db	'A##@S          .;srii;,i1;      .B@@G'
+head13 db	'A##@@Ah,       .;, ::iirs.     sA@#@@'
+head14 db	'A#@@@@@MGs,          s3Sr  :r3A@@#@@#'
+head15 db	'A######@@@M&X31riis1ss158&H#@@@@#####'
+
+squ db 0dbh,0dbh,0dbh,0dbh,0dbh,0dbh,0dbh,0dbh
+
+eng1 db 'This is purple.  ' ;01h
+eng2 db 'This is green.   ' ;0ah
+eng3 db 'This is gray.    ' ;03h,0ch,0dh,0eh,09h,0fh
+eng4 db 'This is red.     '		;0ch
+eng5 db 'This is pink.    '	;0dh
+eng6 db 'This is yellow.  ';0eh
+eng7 db 'This is blue.    ';09h
+eng8 db 'This is white.   '	;0fh
+
+
+
+chi1 db 'ÕâÊÇ×ÏÉ«'
+chi2 db 'ÕâÊÇÂÌÉ«'
+chi3 db 'ÕâÊÇ»ÒÉ«'
+chi4 db 'ÕâÊÇºìÉ«'
+chi5 db 'ÕâÊÇ·ÛÉ«'	;0dh	
+chi6 db 'ÕâÊÇ»ÆÉ«'    ;0eh
+chi7 db 'ÕâÊÇÀ¶É«'
+chi8 db 'ÕâÊÇ°×É«'
+chin_len EQU ($-chi8)/2
+
+
+huanchong db 0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h,0f9h
+
+ba db 0fh
+color_char1 resb 1  ;ÏÔÊ¾ÑÕÉ«
+color_ db 01h,02h,0ah,0ch,0dh,0eh,09h,0fh
+colornumber db 0
+start_c db 59
+start:	
 	pusha
-	cli				; å…³é—­ä¸­æ–­ï¼Œé˜²æ­¢æ”¹åŠ¨æœŸé—´å‘ç”Ÿæ–°çš„ä¸­æ–­
-
-	; è®¾ç½®16hæ–°ä¸­æ–­å‘é‡
-	; è®¡ç®—16hå·ä¸­æ–­åœ¨IVTä¸­çš„åç§»
-	mov bx, 16h		; BX = 16ï¼ˆä¸­æ–­å·ï¼‰
-	shl bx, 2		; BX << 2ï¼ˆBX *= 4ï¼‰ 
-	cli				; å…³é—­ä¸­æ–­ï¼Œé˜²æ­¢æ”¹åŠ¨æœŸé—´å‘ç”Ÿæ–°çš„09hå·ä¸­æ–­
-	; è®¾ç½®16hå·ä¸­æ–­çš„æ–°å‘é‡
-	xor ax, ax		; AX = 0
-	mov ax,ds
-	mov es, ax		; ES = AX = 0
-	mov word [es:bx], new_int_16h ; åç§»åœ°å€
-	mov word [es:bx + 2], cs ; æ®µåœ°å€
-
-	sti				; é‡æ–°å¼€æ”¾ä¸­æ–­ 
+	push ds
+	push es
+	mov ax,1000h
+	mov es,ax
+	mov ds,ax
+	
+	inc byte [start_c]
+	mov al,[start_c]
+	cmp al,60
+	jnz _3
+	mov byte[start_c],0
+	mov ax,0
+	mov al,[colornumber]
+	call show
+	
+	mov ax,0
+	mov al,[colornumber]
+	inc ax
+	mov [colornumber],al
+	cmp ax,8
+	jnz _3
+	mov ax,0
+	mov [colornumber],al
+_3:
+	pop es
+	pop ds
 	popa
 	ret
-
-;-------------------------------------------------------------------------------
-new_int_16h: ; é”®ç›˜è½¯ä¸­æ–­çš„å¤„ç†ç¨‹åº
-	cmp ah, 0		; AH = 0
-	jne	.return		; AH != 0 ç»“æŸä¸­æ–­
 	
-	push ds			; ä¿æŠ¤DSå…¥æ ˆ
-	mov ax, cs		; AX = CS
-	mov ds, ax		; DS = AX = CS
-
-.rep:	
-	; åˆ¤æ–­çŠ¶æ€
-	in al, 64h		; è¯»å–8042çš„çŠ¶æ€å¯„å­˜å™¨
-	test al, 0E0h	; å¥‡å¶é”™è¯¯æˆ–è¶…æ—¶ï¼Ÿ
-	jnz .rep		; å‡ºé”™æ—¶é‡æ¥
-	test al, 1		; è¾“å‡ºç¼“å†²å™¨æ»¡ï¼Ÿ
-	jz .rep			; ä¸ºç©ºæ—¶é‡æ¥
-
-	; è¯»å–é”®ç›˜æ‰«æç 
-	in al, 60h
 	
-	; åˆ¤æ–­æ˜¯å¦å‡ºé”™
-	cmp al, 0FFh	; AL = FFh ?
-	je	.rep		; é”™è¯¯ç 
-	test al, al		; AL = 0 ?
-	jz	.rep		; é”™è¯¯ç 
+	;mov ah,4ch
+	;int 21h
 	
-	; è®¾ç½®Shifté”®çŠ¶æ€ï¼ˆä¼¼switchè¯­å¥çš„if-elseå®žçŽ°ï¼‰
-	cmp al, 2Ah		; AL = å·¦Shifté”®æŽ¥é€šç ï¼Ÿ
-	jne .1			; ä¸ç­‰è·³è½¬
-	mov byte [shift_l], 1; shift_1 = 1
-	jmp .rep		; è·³å‡º
-.1:	cmp al, 36h		; AL = å³Shifté”®æŽ¥é€šç ï¼Ÿ
-	jne .2			; ä¸ç­‰è·³è½¬
-	mov byte [shift_r], 1; shift_r = 1
-	jmp .rep		; è·³å‡º
-.2:	cmp al, 0AAh	; AL = å·¦Shifté”®æ–­å¼€ç ï¼Ÿ
-	jne .3			; ä¸ç­‰è·³è½¬
-	mov byte [shift_l], 0; shift_1 = 0
-	jmp .rep		; è·³å‡º
-.3	cmp al, 0B6h	; AL = å³Shifté”®æ–­å¼€ç ï¼Ÿ
-	jne .4			; ä¸ç­‰è·³è½¬
-	mov byte [shift_r], 0; shift_r = 0
-	jmp .rep		; è·³å‡º
+show:
+	pusha
+	push ax
+	mov di,color_
+	mov cx,ax
+ad:
+	cmp cx,0
+	jz .1
+	inc di 
+	dec cx
+	jmp ad
+.1:
+	pop ax
+	push ax
+	mov bx,[di]
+	;mov bl,04h
+	mov [color_char1],bl
 	
-.4:
-	; åˆ¤æ–­æ˜¯å¦ä¸ºæ–­å¼€ç ï¼ˆæœªå¤„ç†E0h/E1hå‰å¯¼çš„æ‰©å……é”®æ‰«æç åºåˆ—ï¼‰
-	test al, 80h	; AL & 80h = 0 ?
-	jnz	.rep		; != 0 ä¸ºæ–­å¼€ç 
-	; ä¸ºæŽ¥é€šç 
-	push ax			; ä¿å­˜æ‰«æç ALå…¥æ ˆ
-	call scode2ascii; æ‰«æç è½¬æ¢ä¸ºASCIIç 
-	cmp al, 0		; AL = 0 ?
-	je .rep			; ASCIIç =0æ—¶é‡æ¥
-	pop bx			; ä»Žæ ˆä¸­æ¢å¤æ‰«æç 
-	mov ah, bl		; AH = æ‰«æç 
-
-	pop ds			; ä»Žæ ˆä¸­æ¢å¤DS
-
-.return:
-	iret			; ä»Žä¸­æ–­è¿”å›ž
+	; mov dh,29	;ÐÐ
+	; mov dl, 30 		; µÚ10ÁÐ
+	; call displayhc
 	
-; -------------------------------------------------------------------
-scode2ascii: ; æ‰«æç è½¬æ¢ä¸ºASCIIç ï¼ˆè¾“å…¥/è¾“å‡ºå‚æ•°å‡ä¸ºALï¼‰
-	cmp al, s2alen	; æ‰«æç  >= æ•°ç»„å…ƒç´ ä¸ªæ•°ï¼Ÿ
-	jge	.2			; >= è·³è½¬
-	movzx bx, al	; BX = AL
-	shl bx, 1		; BX *= 2
-	mov ah, [shift_l]; AH = shift_l
-	or ah, [shift_r]; shift_l | shift_r
-	jz .1			; shift_l | shift_r = 0 è·³è½¬
-	inc bx			; shift_l | shift_r â‰  0 BX ++
-.1: ; ASCII
-	mov al, [s2a + bx]; AL = ASCII
-	jmp .3			; è·³è½¬åˆ°è¿”å›ž
-.2: ; 0
-	mov al, 0		; AL = 0
-.3: ; è¿”å›ž
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-
-; -------------------------------------------------------------------
-; å®šä¹‰ShiftæŒ‰é”®çŠ¶æ€å˜é‡
-shift_l db 0
-shift_r db 0
-
-s2a: ; å®šä¹‰æ‰«æç è½¬ASCIIç æ•°ç»„
-;ASCII Shift æ‰«æç ï¼ˆæ•°ç»„åºå·/ä¸‹æ ‡ï¼‰
-db 0,	0	; 00hï¼šé”™è¯¯
-db 1Bh,	1Bh	; 01hï¼šEsc
-db '1',	'!'	; 02h
-db '2',	'@'	; 03h
-db '3',	'#'	; 04h
-db '4',	'$'	; 05h
-db '5',	'%'	; 06h
-db '6',	'^'	; 07h
-db '7',	'&'	; 08h
-db '8',	'*'	; 09h
-db '9',	'('	; 0Ah
-db '0',	')'	; 0Bh
-db '-',	'_'	; 0Ch
-db '=',	'+'	; 0Dh
-db 08h,	08h	; 0Ehï¼šBackspace
-db 09h,	09h	; 0Fhï¼šTab
-db 'q',	'Q'	; 10h
-db 'w',	'W'	; 11h
-db 'e',	'E'	; 12h
-db 'r',	'R'	; 13h
-db 't',	'T'	; 14h
-db 'y',	'Y'	; 15h
-db 'u',	'U'	; 16h
-db 'i',	'I'	; 17h
-db 'o',	'O'	; 18h
-db 'p',	'P'	; 19h
-db '[',	'{'	; 1Ah
-db ']',	'}'	; 1Bh
-db 0Dh,	0Dh	; 1Chï¼šEnter
-db 0,	0,	; 1Dhï¼šLeft Ctrl
-db 'a',	'A'	; 1Eh
-db 's',	'S'	; 1Fh
-db 'd',	'D'	; 20h
-db 'f',	'F'	; 21h
-db 'g',	'G'	; 22h
-db 'h',	'H'	; 23h
-db 'j',	'J'	; 24h
-db 'k',	'K'	; 25h
-db 'l',	'L'	; 26h
-db ';',	':'	; 27h
-db "'",	'"'	; 28h
-db '`',	'~'	; 29h
-db 0,	0	; 2Ahï¼šLeft Shift
-db 5Ch,	'|'	; 2Bhï¼š\ 
-db 'z',	'Z'	; 2Ch
-db 'x',	'X'	; 2Dh
-db 'c',	'C'	; 2Eh
-db 'v',	'V'	; 2Fh
-db 'b',	'B'	; 30h
-db 'n',	'N'	; 31h
-db 'm',	'M'	; 32h
-db ',',	'<'	; 33h
-db '.',	'>'	; 34h
-db '/',	'?'	; 35h
-db 0,	0	; 36hï¼šRight Shift
-db '*',	'*'	; 37hï¼šKeypad *
-db 0,	0	; 38hï¼šLeft Alt
-db ' ',	' '	; 39hï¼šSpacebar
-db 0,	0	; 3Ahï¼šCaps Lock
-db 0,	0	; 3Bhï¼šF1
-db 0,	0	; 3Chï¼šF2
-db 0,	0	; 3Dhï¼šF3
-db 0,	0	; 3Ehï¼šF4
-db 0,	0	; 3Fhï¼šF5
-db 0,	0	; 40hï¼šF6
-db 0,	0	; 41hï¼šF7
-db 0,	0	; 42hï¼šF8
-db 0,	0	; 43hï¼šF9
-db 0,	0	; 44hï¼šF10
-db 0,	0	; 45hï¼šNum Lock
-db 0,	0	; 46hï¼šScroll Lock
-db '7',	0	; 47hï¼šKeypad 7/Home
-db '8',	0	; 48hï¼šKeypad 8/â†‘
-db '9',	0	; 49hï¼šKeypad 9/PgUp
-db '-',	'-'	; 4Ahï¼šKeypad -
-db '4',	0	; 4Bhï¼šKeypad 4/â†
-db '5',	0	; 4Chï¼šKeypad 5
-db '6',	0	; 4Dhï¼šKeypad 6/â†’
-db '+',	'+'	; 4Ehï¼šKeypad +
-db '1',	0	; 4Fhï¼šKeypad 1/End
-db '2',	0	; 50hï¼šKeypad 2/â†“
-db '3',	0	; 51hï¼šKeypad 3/PgDn
-db '0',	0	; 52hï¼šKeypad 0/Ins
-db '.',	7Fh	; 53hï¼šKeypad ./Del
-s2alen equ ($ - s2a)/2
-;=============================================================================
-
-; ===================================================================
-; å°åž‹è¾…åŠ©ä¾‹ç¨‹å¼€å§‹
-;--------------------------------------------------------------------
-int21h: ; int 21hä¸­æ–­å¤„ç†ä¾‹ç¨‹
+	;call displayhc
+	
+	
+	mov bx,7  ;ÐÐ
+	mov dl,20 		; µÚ0ÁÐ
+	call displayhead
+	
+	mov bx,11	;ÐÐ
+	mov dl, 60 		; µÚ40ÁÐ
+	call displaysqu
+	pop ax
+	push ax
+	mov si,eng1
+	mov di,chi1
+.11:	cmp ax,0
+	jz .2
+	add si,17
+	add di,chin_len
+	add di,chin_len
+	dec ax
+	jmp .11
+.2:	
+	mov dh,23	;ÐÐ
+	mov dl, 30 		; µÚ10ÁÐ
+	call displayeng
+	
+	mov di,8
+	mov dx,400
+	mov cx,270
+.33:	
+	push cx
+	mov al,0fh
+	mov [ba],al
+	call hc
+	dec di
+	pop cx
+	add cx,10
+	cmp di,0
+	jnz .33
+	
+	mov cx,270
+	mov ax,10
+	mov bl,[colornumber]
+	mul bl
+	add cx,ax
+	mov dx,400
+	mov al,[color_char1]
+	mov [ba],al
+	call hc
+	; mov cx,340
+	; mov dx,400
+	; mov al,0fh
+	; mov [ba],al
+	; call hc
+	
+	
+	mov bp,di
+	mov dh,22
+	mov dl,26
+	;call displaychi
+	
+	
+	pop ax
+	popa
+	ret
+	
+	
+displaychi:
+	pusha
+	mov ah,42h
+	mov cx,chin_len
+	
+	mov bl,[color_char1]
+	int 21h
+	popa
+	ret
+displayeng:	
+	pusha
+	mov bp, si 	; BP=´®µØÖ·
+	mov cx, 17	; ´®³¤
+	call display
+	popa 
+	ret	
+	
+	
+displaysqu:
+	pusha
+	mov si,squ
+	mov cx,10
+.1:
+	mov bp, si 	; BP=´®µØÖ·
+	mov dh,bl
+	push cx
+	mov cx, 8	; ´®³¤
+	
+	call display
+	pop cx
+	
+	inc bx
+	loop .1
+	popa
+	ret
+	
+displayhead:
+	pusha
+	mov si,head1
+	mov cx,15
+.1:
+	mov bp, si 	; BP=´®µØÖ·
+	mov dh,bl
+	push cx
+	mov cx, 37	; ´®³¤
+	
+	call display
+	pop cx
+	add si,37
+	inc bx
+	loop .1
+	popa
+	ret
+	
+displayhc:
+	pusha
+	push dx
+	push cx
+	mov dh,49
+	mov dl,20
+	mov cx,10
+	call display
+	pop cx
+	pop dx
+	popa
+	ret
+	
+hc:
+	pusha
+	; push cx
+	; push bx
+	; push dx
+	; push ax
+	
+	push dx
+	push cx
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	
+	
+	inc cx
+	;mov cx,51
+	;mov dx,20
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	inc cx
+	;mov cx,52
+	;mov dx,20
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	
+	pop cx
+	push cx
+	;mov cx,50
+	inc dx
+	;mov dx,21
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	inc cx
+	;mov cx,51
+	;mov dx,21
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	inc cx
+	;mov cx,52
+	;mov dx,21
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	
+	pop cx
+	;mov cx,50
+	inc dx
+	;mov dx,22
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	inc cx
+	;mov cx,51
+	;mov dx,22
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	inc cx
+	;mov cx,52
+	;mov dx,22
+	mov bh,0
+	mov ah,0ch
+	mov al,[ba]
+	int 10h
+	pop dx
+	; pop ax
+	; pop dx
+	; pop bx
+	; pop cx
+	popa
+	ret
+	
+display:	
+	pusha
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, [color_char1] 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	
+	;mov dl, 0 		; µÚ0ÁÐ
+	;mov bp, head1 	; BP=´®µØÖ·
+	;mov cx, 37	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	popa
+	ret 
+display1:	
+	pusha
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	
+	;mov dl, 0 		; µÚ0ÁÐ
+	;mov bp, head1 	; BP=´®µØÖ·
+	;mov cx, 37	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	popa
+	ret 
+; =======================================================================¶¯»­½áÊø==============================================================================
+; ============================AH=3Dh==========================================
+cc dw 0
+; ============================AH=3Dh=======================================END
+int21h: ; int 21hÖÐ¶Ï´¦ÀíÀý³Ì
+	cmp ah,4ch
+	jnz .1
+; ============================AH=4ch==========================================
 	mov al, 20h		; AL = EOI
-	out 20h, al		; å‘é€EOIåˆ°ä¸»8529A
-	out 0A0h, al	; å‘é€EOIåˆ°ä»Ž8529A
+	out 20h, al		; ·¢ËÍEOIµ½Ö÷8529A
+	out 0A0h, al	; ·¢ËÍEOIµ½´Ó8529A
 	
-	; åˆå§‹åŒ–æ®µå¯„å­˜å™¨å’Œæ ˆæŒ‡é’ˆ
-	mov ax, cs 		; é€šè¿‡AXä¸­è½¬,  å°†CSçš„å€¼ä¼ é€ç»™DSã€ESå’ŒSS
+	; ³õÊ¼»¯¶Î¼Ä´æÆ÷ºÍÕ»Ö¸Õë
+	mov ax, cs 		; Í¨¹ýAXÖÐ×ª,  ½«CSµÄÖµ´«ËÍ¸øDS¡¢ESºÍSS
 	mov ds, ax
 	mov es, ax
 	mov ss, ax
-	mov sp, 100h - 4; ç½®æ ˆé¡¶æŒ‡é’ˆSP=100h-4
+	mov sp, 100h - 4; ÖÃÕ»¶¥Ö¸ÕëSP=100h-4
 	
-	jmp again		; é‡æ–°å¼€å§‹å‘½ä»¤è¡Œå¾ªçŽ¯
-
-; -------------------------------------------------------------------
-getdiskparam: ; èŽ·å–ç£ç›˜å‚æ•°H/S
-	call ReadPBootSec		; è°ƒç”¨è¯»å…¥ç£ç›˜åˆ†åŒºå¼•å¯¼æ‰‡åŒºä¾‹ç¨‹
-	mov ax, [Sector + 18h]	; AX = æ¯ç£é“æ‰‡åŒºæ•°
-	mov [secspt], ax		; secspt = AX = æ¯ç£é“æ‰‡åŒºæ•°
-	mov ax, [Sector + 1Ah]	; AX = ç£å¤´æ•°
-	mov [heads], ax			; heads = AX = ç£å¤´æ•°
-	ret						; ä»Žä¾‹ç¨‹è¿”å›ž
-	
-; -------------------------------------------------------------------
-newline: ; æ¢è¡Œï¼ˆæ˜¾ç¤ºå›žè½¦ç¬¦å’Œæ¢è¡Œç¬¦ï¼‰
-	; æ˜¾ç¤ºå›žè½¦ç¬¦CRï¼ˆç½®å½“å‰åˆ—å·=0ï¼‰
-	mov ah, 0Eh 	; åŠŸèƒ½å·
-	mov al, 0Dh 	; è®¾ç½®ALä¸ºå›žè½¦ç¬¦CRï¼ˆASCIIç ä¸º0DHï¼‰
-	mov bl, 0 		; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºæ¢è¡Œç¬¦ï¼ˆå½“å‰è¡Œå·++ï¼‰
-	mov ah, 0Eh 	; åŠŸèƒ½å·
-	mov al, 0Ah 	; è®¾ç½®ALä¸ºæ¢è¡Œç¬¦LFï¼ˆASCIIç ä¸º0AHï¼‰
-	mov bl, 0 		; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-
-; -------------------------------------------------------------------
-space: ; æ˜¾ç¤ºç©ºæ ¼ç¬¦
-	mov ah, 0Eh 	; åŠŸèƒ½å·
-	mov al, 20h 	; è®¾ç½®ALä¸ºç©ºæ ¼ç¬¦SPï¼ˆASCIIç ä¸º20Hï¼‰
-	mov bl, 0 	; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret			; ä»Žä¾‹ç¨‹è¿”å›ž
-	
-; -------------------------------------------------------------------
-showwrong: ; æ˜¾ç¤ºå‡ºé”™ä¿¡æ¯
-	call newline 	; å›žè½¦æ¢è¡Œ
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºå‡ºé”™ä¿¡æ¯ä¸²
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str3 	; BP=ä¸²åœ°å€
-	mov cx, str3len	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-;--------------------------------------------------------------------
-showError1: ;æ˜¾ç¤ºå‡ºé”™ä¿¡æ¯ æç¤ºä¸²é•¿=cx ,æç¤ºä¸²åç§»=bp
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºå‡ºé”™ä¿¡æ¯ä¸²
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str10 	; BP=ä¸²åœ°å€
-	mov cx, str10len	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-; -------------------------------------------------------------------
-showtoolong: ; æ˜¾ç¤ºå¤ªé•¿ä¿¡æ¯
-	call newline 	; å›žè½¦æ¢è¡Œ
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºå¤ªé•¿ä¿¡æ¯ä¸²
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str4 	; BP=ä¸²åœ°å€
-	mov cx, str4len	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-	
-;--------------------------------------------------------------------
-; å°åž‹è¾…åŠ©ä¾‹ç¨‹ç»“æŸ
-; ===================================================================
-
-	
-; ===================================================================
-; å†…éƒ¨å‘½ä»¤ä¾‹ç¨‹å¼€å§‹
-;-------------------------------------------------------------------------------
-new_int_0x70_dc: ; 70hå·æ–°ä¸­æ–­å¤„ç†ç¨‹åºå…¥å£
-	; ä¿å­˜å°†è¦ä½¿ç”¨çš„å¯„å­˜å™¨ä»¥å…è¢«ç ´å
-	push ax
-	push bx
-	push es
-	
-  wait0: ; åˆ¤æ–­æ˜¯å¦å¯è¯»æ—¥æœŸä¸Žæ—¶é—´ä¿¡æ¯	
-	; æ­¤æ®µä»£ç å¯¹äºŽæ›´æ–°å‘¨æœŸç»“æŸä¸­æ–­æ¥è¯´æ˜¯ä¸å¿…è¦çš„
-	mov al, 0x0a	; æŒ‡å®šå¯„å­˜å™¨A
-	or al, 0x80		; é˜»æ–­NMIã€‚å½“ç„¶ï¼Œé€šå¸¸æ˜¯ä¸å¿…è¦çš„	   
-	out 0x70, al	; è¾“å‡ºALåˆ°ç«¯å£70hï¼Œé€‰æ‹©å¯„å­˜å™¨A
-	in al, 0x71		; è¯»å¯„å­˜å™¨A
-	test al, 0x80	; æµ‹è¯•ç¬¬7ä½ = 0ï¼Ÿ 
-	jnz wait0		; â‰  0æ—¶ï¼ˆæ—¥æœŸä¸Žæ—¶é—´åœ¨æ›´æ–°ä¸­ï¼‰éœ€ç­‰å¾…
-
-	; èŽ·å–å½“å‰çš„æ—¶é—´ä¿¡æ¯
-	; èŽ·å–ç§’ä¿¡æ¯
-	xor al, al		; AL = 0
-	out 0x70, al	; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 0x71		; è¯»RTCå½“å‰æ—¶é—´(ç§’)
-	push ax			; å°†èŽ·å–çš„æ•°æ®ALåŽ‹æ ˆä¿å­˜
-	; èŽ·å–åˆ†ä¿¡æ¯
-	mov al, 2		; AL = 2
-	out 0x70, al	; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 0x71		; è¯»RTCå½“å‰æ—¶é—´(åˆ†)
-	push ax			; å°†èŽ·å–çš„æ•°æ®ALåŽ‹æ ˆä¿å­˜
-	; èŽ·å–æ—¶ä¿¡æ¯
-	mov al, 4		; AL = 4
-	out 0x70, al	; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 0x71		; è¯»RTCå½“å‰æ—¶é—´(æ—¶)
-	push ax			; å°†èŽ·å–çš„æ•°æ®ALåŽ‹æ ˆä¿å­˜
-	; è¯»å–å¯„å­˜å™¨C
-	mov al, 0x0c	; æŒ‡å®šå¯„å­˜å™¨Cï¼Œä¸”å¼€æ”¾NMI 
-	out 0x70, al	; è¾“å‡ºALåˆ°ç«¯å£70hï¼Œé€‰æ‹©å¯„å­˜å™¨C
-	in al, 0x71		; è¯»RTCçš„å¯„å­˜å™¨Cï¼Œå¦åˆ™åªå‘ç”Ÿä¸€æ¬¡ä¸­æ–­
-					; æ­¤å¤„ä¸è€ƒè™‘é—¹é’Ÿå’Œå‘¨æœŸæ€§ä¸­æ–­çš„æƒ…å†µ 
-	
-	; åœ¨å±å¹•å³ä¸Šè§’æ˜¾ç¤ºæ—¶é—´ä¿¡æ¯
-	; ç½®ES = æ˜¾å­˜åŸºå€
-	mov ax,0xb800	; AX = B800hï¼ˆå½©è‰²æ–‡æœ¬å±å¹•æ˜¾å­˜çš„èµ·å§‹åœ°å€ >> 4ï¼‰
-	mov es,ax		; ES = AX = B800hï¼ˆES = æ˜¾å­˜åŸºå€ï¼‰
-	; è®¾ç½®æ—¶é—´ä¸²çš„èµ·å§‹ä½ç½®
-	mov bx, (0*80 + 72)*2; ä»Žå±å¹•ä¸Šçš„ç¬¬0è¡Œ72åˆ—å¼€å§‹æ˜¾ç¤º
-	
-	; æ˜¾ç¤ºæ—¶
-	pop ax			; ä»Žæ ˆä¸­å¼¹å‡ºæ—¶
-	call bcd2ascii	; è°ƒç”¨BCDè½¬ASCIIä¾‹ç¨‹
-	; æ˜¾ç¤ºä¸¤ä½å°æ—¶æ•°å­—
-	mov [es:bx], ah
-	mov [es:bx + 2], al
-	; æ˜¾ç¤ºåˆ†éš”ç¬¦':'
-	mov al,':'
-	mov [es:bx + 4], al
-
-	; æ˜¾ç¤ºåˆ†
-	pop ax			; ä»Žæ ˆä¸­å¼¹å‡ºåˆ†
-	call bcd2ascii	; è°ƒç”¨BCDè½¬ASCIIä¾‹ç¨‹
-	; æ˜¾ç¤ºä¸¤ä½åˆ†é’Ÿæ•°å­—
-	mov [es:bx + 6], ah
-	mov [es:bx + 8], al
-	; æ˜¾ç¤ºåˆ†éš”ç¬¦':'
-	mov al,':'
-	mov [es:bx + 10], al
-	
-	; æ˜¾ç¤ºç§’
-	pop ax			; ä»Žæ ˆä¸­å¼¹å‡ºç§’
-	call bcd2ascii	; è°ƒç”¨BCDè½¬ASCIIä¾‹ç¨‹
-	; æ˜¾ç¤ºä¸¤ä½å°æ—¶æ•°å­—
-	mov [es:bx + 12], ah
-	mov [es:bx + 14], al
-	
-	; å‘é€EOIç»™8259A
-	mov al, 0x20	;ä¸­æ–­ç»“æŸå‘½ä»¤EOI 
-	out 0xa0, al	;å‘ä»Žç‰‡å‘é€ 
-	out 0x20, al	;å‘ä¸»ç‰‡å‘é€ 
-
-	; æ¢å¤ä¿å­˜çš„å¯„å­˜å™¨å€¼
-	pop es
-	pop bx
-	pop ax
-
-	iret			; ä»Žä¸­æ–­è¿”å›ž
-; -------------------------------------------------------------------
-_dt:
-	pusha 
-	; èŽ·å–å¹´ä¿¡æ¯
-	mov al, 9			; å¹´çš„åç§»åœ°å€ä¸º9
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥å¹´ä¿¡æ¯
-	; æ˜¾ç¤ºå¹´ä¿¡æ¯
-	call ShowBCD	; æ˜¾ç¤ºBCDåè¿›åˆ¶æ•°
-	; æ˜¾ç¤ºå¥ç‚¹åˆ†éš”ç¬¦
-	mov al, '.'			; AL = '.'
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-
-	; èŽ·å–æœˆä¿¡æ¯
-	mov al, 8			; æœˆçš„åç§»åœ°å€ä¸º8
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥æœˆä¿¡æ¯
-	; æ˜¾ç¤ºæœˆä¿¡æ¯
-	call ShowBCD	; æ˜¾ç¤ºBCDåè¿›åˆ¶æ•°
-	; æ˜¾ç¤ºå¥ç‚¹åˆ†éš”ç¬¦
-	mov al, '.'			; AL = '.'
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-	
-	; èŽ·å–æ—¥ä¿¡æ¯
-	mov al, 7			; æ—¥çš„åç§»åœ°å€ä¸º7
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥æ—¥ä¿¡æ¯
-	; æ˜¾ç¤ºæ—¥ä¿¡æ¯
-	call ShowBCD	; æ˜¾ç¤ºBCDåè¿›åˆ¶æ•°
-	; æ˜¾ç¤ºç©ºæ ¼åˆ†éš”ç¬¦
-	mov al, ' '			; AL = ' '
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-	
-	; èŽ·å–æ˜ŸæœŸä¿¡æ¯
-	mov al, 6			; æ˜ŸæœŸçš„åç§»åœ°å€ä¸º6
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥æ˜ŸæœŸä¿¡æ¯
-	; æ˜¾ç¤ºæ˜ŸæœŸä¿¡æ¯
-	dec al			; AL --
-	mov bl, 3			; BL = 3
-	mul bl			; AX = AL * BL
-	add ax, weekstrs	; AX += weekstrs
-	mov bp, ax		; BP = AX æŒ‡å‘å¯¹åº”æ˜ŸæœŸä¸²
-	mov cx, 3			; ä¸²é•¿ CX = 3
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	; æ˜¾ç¤ºç©ºæ ¼åˆ†éš”ç¬¦
-	mov al, ' '			; AL = ' '
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-	
-	; èŽ·å–æ—¶ä¿¡æ¯
-	mov al, 4			; æ—¶çš„åç§»åœ°å€ä¸º4
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥æ—¶ä¿¡æ¯
-	; æ˜¾ç¤ºæ—¶ä¿¡æ¯
-	call ShowBCD	; æ˜¾ç¤ºBCDåè¿›åˆ¶æ•°
-	; æ˜¾ç¤ºå†’å·åˆ†éš”ç¬¦
-	mov al, ':'			; AL = ':'
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-
-	; èŽ·å–åˆ†ä¿¡æ¯
-	mov al, 2			; åˆ†çš„åç§»åœ°å€ä¸º2
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥åˆ†ä¿¡æ¯
-	; æ˜¾ç¤ºåˆ†ä¿¡æ¯
-	call ShowBCD	; æ˜¾ç¤ºBCDåè¿›åˆ¶æ•°
-	; æ˜¾ç¤ºå†’å·åˆ†éš”ç¬¦
-	mov al, ':'			; AL = ':'
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-
-	; èŽ·å–ç§’ä¿¡æ¯
-	mov al, 0			; ç§’çš„åç§»åœ°å€ä¸º0
-	out 70h, al		; æŒ‡å®šå­˜å‚¨å•å…ƒåœ°å€
-	in al, 71h			; è¯»å…¥ç§’ä¿¡æ¯
-	; æ˜¾ç¤ºç§’ä¿¡æ¯
-	call ShowBCD	; æ˜¾ç¤ºBCDåè¿›åˆ¶æ•°
-	; è®¾ç½®å…‰æ ‡ä½ç½®
-	mov ah, 2		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	mov dl, 0		; åˆ—å·
-	int 10h			; æ˜¾ç¤ºä¸­æ–­
-	; é€€å›žDOS
-	popa	
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰  ;æ¢å¤è¡Œå·æ–¹ä¾¿newlineä½¿ç”¨
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	ret
-weekstrs: ; å®šä¹‰æ˜ŸæœŸä¸²æ•°ç»„
-	db 'Sun'
-	db 'Mon'
-	db 'Tue'
-	db 'Wed'
-	db 'Thu'
-	db 'Fri'
-	db 'Sat'
-; -------------------------------------------------------------------
-_dc:
+	mov ah,0fh      ;¶ÁÈ¡ÏÔÊ¾Ä£Ê½
+	cmp al,12h      ;ÊÇ·ñÊÇ600*480 Í¼ÐÎÄ£Ê½£¿
+	jz .out
+	;mov ax,12h      ;Ìø»ØÍ¼ÐÎÄ£Ê½
+	;mov bh,0
+	;mov bl,0fh
+	;int 10h
+	;mov ax,0bh     	;ÉèÖÃ±³¾°ÑÕÉ«
+	;mov bh,0
+	;mov bl,00h		;ºÚÉ«±³¾°
+	;int 10h
+.out
+	jmp again		; ÖØÐÂ¿ªÊ¼ÃüÁîÐÐÑ­»·
+; ============================AH=4ch=======================================END
+.1:
+	cmp ah,3Dh
+	jnz AH_3FH
+; ============================AH=3Dh==========================================
+	; ´ò¿ªHZK16×Ö¿âÎÄ¼þ£¬½«Æä¼ÓÔØµ½58000hÎ»ÖÃ£¬ÓÃÓÚÏÔÊ¾ºº×Ö
+    ; ÏÂÃæÔÚAÅÌ¸ùÄ¿Â¼ÖÐÑ°ÕÒ *.BIN
+	iret
+; ============================AH=3Dh=======================================END
+AH_3FH:
+	cmp ah,3fh
+	jnz AH_42H
+; ============================AH=3Fh==========================================
+	;¶Á×Ö¿âÎÄ¼þ  Ä¬ÈÏ32×Ö½Ú
+	;Èë¿Ú£º CX=¶ÁÈ¡×Ö½ÚÊý   DS£ºDX=Êý¾Ý»º³åÇøµØÖ·   ³ö¿Ú£ºÎÞ
 	pusha
-	; è®¾ç½®70hæ–°ä¸­æ–­å‘é‡
-	; è®¡ç®—70hå·ä¸­æ–­åœ¨IVTä¸­çš„åç§»
-	mov bx, 0x70	; BX = 70hï¼ˆä¸­æ–­å·ï¼‰
-	shl bx, 2		; BX << 2ï¼ˆBX *= 4ï¼‰ 
-	cli				; å…³é—­ä¸­æ–­ï¼Œé˜²æ­¢æ”¹åŠ¨æœŸé—´å‘ç”Ÿæ–°çš„0x70å·ä¸­æ–­
-	; è®¾ç½®70hå·ä¸­æ–­çš„æ–°å‘é‡
-	push es			; ä¿å­˜ESå…¥æ ˆ
-	xor ax, ax		; AX = 0
-	mov es, ax		; ES = AX = 0
-	mov word [es:bx], new_int_0x70_dc ; åç§»åœ°å€
-	mov word [es:bx + 2], cs ; æ®µåœ°å€
-	pop es			; ä»Žæ ˆä¸­æ¢å¤ES
-
-	; è®¾ç½®RTCçŠ¶æ€å¯„å­˜å™¨B
-	mov al, 0x0b	; æŒ‡å®šRTCå¯„å­˜å™¨B
-	or al, 0x80		; é˜»æ–­NMI 
-	out 0x70, al	; é€‰æ‹©å¯„å­˜å™¨B
-	mov al, 0x12	; ç¦æ­¢å‘¨æœŸæ€§å’Œé—¹é’Ÿä¸­æ–­ï¼Œåªå¼€æ”¾æ›´æ–°ç»“æŸåŽä¸­æ–­ï¼Œé‡‡ç”¨BCDç å’Œ24å°æ—¶åˆ¶  00010010
-	out 0x71, al	; è®¾ç½®å¯„å­˜å™¨B 
-	; è¯»å–RTCçŠ¶æ€å¯„å­˜å™¨C
-	mov al, 0x0c	; æŒ‡å®šRTCå¯„å­˜å™¨Cï¼Œå¼€æ”¾NMI
-	out 0x70, al	; é€‰æ‹©å¯„å­˜å™¨C
-	in al, 0x71		; è¯»RTCå¯„å­˜å™¨Cï¼Œå¤ä½æœªå†³çš„ä¸­æ–­çŠ¶æ€
-
-	; æ‰“å¼€ä»Ž8259Açš„IRQ0ï¼ˆRTCï¼‰ä¸­æ–­
-	in al, 0xa1		; è¯»ä»Ž8259Açš„IMRå¯„å­˜å™¨ 
-	and al, 0xfe	; æ¸…é™¤bit0ï¼ˆæ­¤ä½è¿žæŽ¥RTCï¼‰
-	out 0xa1, al	; å†™å›žæ­¤å¯„å­˜å™¨ 
-
-	sti				; é‡æ–°å¼€æ”¾ä¸­æ–­ 
+	push ax
 	
-	;jmp $			; å¦‚æžœåœ¨DOSä¸‹è¿è¡Œï¼Œéœ€ç”¨æ­¤æ­»å¾ªçŽ¯ä»£æ›¿ä¸‹é¢çš„é€€å‡ºDOSä¸­æ–­
-
-	; é€€å›žDOS
+	mov al,bh
+	call hex2ascii
+	pop ax
+	mov al,bl
+	call hex2ascii
+	;mov ax,0b800h
+	;mov gs,ax
+	
+	;mov bh,00001111b
+	;mov bl,al
+	;mov [gs:(12*80+25)*2],bx
+	popa
+	iret
+; ============================AH=3Fh=======================================END
+AH_42H:
+	cmp ah,42h
+	jnz AH_NULL
+; ============================AH=42h==========================================
+	;Ô­dosÖÐ¶Ï;ÒÆ¶¯ÒÑ¶ÁÈ¡ÎÄ¼þµÄÖ¸Õë  
+	;;Èë¿Ú£º CX£ºDXÎ»ÒÆÁ¿
+	;ÐÂcmdÖÐ¶Ï;INT21H AH=42h ÔÚÖ¸¶¨Î»ÖÃÏÔÊ¾ºº×Ö ´®µØÖ·=BP ´®³¤=CX  ÐÐºÅDH ÁÐºÅDL
+	pusha
+	push es
+	push ds       ;±£´æÔ­¼Ä´æÆ÷ÐÅÏ¢£¬ÓÈÆäÊÇes dsµÄµØÖ·
+	mov ax,1000h
+	mov es,ax
+	mov ds,ax
+	
+	mov [color_char],bl   ;ÉèÖÃÑÕÉ«
+	;mov es,ax    ?»Ö¸´es ds ÎªcmdµÄ¶ÎµØÖ· 
+	;mov ds,ax
+	xor ax,ax     ;ÏñËØµã*16=ÐÐÁÐºÅ
+	mov al,dh
+	mov bl,16
+	mul bl
+	mov [line_char],ax
+	xor ax,ax
+	mov al,dl
+	mov bl,16
+	mul bl
+	
+	mov [col_char],ax
+	mov [disp_data_len],cx
+	push ax
+	mov ax,1000h
+	mov es,ax
+	mov ds,ax
+	;mov al,ch
+	;call hex2ascii
+	;mov al,cl
+	;call hex2ascii
+	;xor ah,ah
+	;int 16h
+	pop ax
+	shl cx,1      ;CX*2==×Ö·û´®×Ö½ÚÊý
+	
+	;ds=1000h di=disp_data
+	mov di,disp_data
+	mov si,bp
+	;es=µ÷ÓÃ³ÌÐò¶Î SI=BP²»±ä
+	pop ds        ;µ¯³ö³ÌÐòËùÔÚ¶Î
+	repe movsb
+;.movsb
+	;mov al,[ds:si]
+	;mov [es:di],al
+	;inc si
+	;inc di
+	;push ax
+	;call hex2ascii
+	;pop ax
+	;loop .movsb
+	
+	push ds
+	mov ax,1000h  ;ÔÙ»Ö¸´es
+	mov ds,ax    
+	call HZK16_test
+	pop ds
+	pop es
 	popa
 	
-	ret
-; -------------------------------------------------------------------
-ShowChar_dt: ; æ˜¾ç¤ºå•ä¸ªå­—ç¬¦ï¼ˆä»¥ALä¸ºä¼ é€’å‚æ•°ï¼‰
-	mov ah, 0Eh		; åŠŸèƒ½å·ï¼ˆä»¥ç”µä¼ æ–¹å¼æ˜¾ç¤ºå•ä¸ªå­—ç¬¦ï¼‰
-	mov bl, 0 		; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 			; è°ƒç”¨10Hå·ä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-;-------------------------------------------------------------------------------
-bcd2ascii: ;BCDç è½¬ASCIIï¼ˆè¾“å…¥ï¼šAL = BCDç ï¼Œè¾“å‡ºï¼šAX = ASCIIï¼‰
-	mov ah, al		; AH = ALï¼ˆåˆ†æ‹†æˆä¸¤ä¸ªæ•°å­—ï¼‰
-	and al, 0x0f	; AL & 0Fhï¼ˆå–BCDçš„ä½Ž4ä½æ•°æ®ï¼‰
-	add al, 0x30	; AL += 30hï¼ˆè½¬æ¢æˆASCIIï¼‰
-	shr ah, 4		; AH >> 4ï¼ˆå–BCDçš„é«˜4ä½æ•°æ®ï¼‰
-	add ah, 0x30	; AH += 30hï¼ˆè½¬æ¢æˆASCIIï¼‰
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-; -------------------------------------------------------------------	
-ShowBCD: ; æ˜¾ç¤ºå•å­—èŠ‚BCDåè¿›åˆ¶æ•°ï¼ˆä»¥ALä¸ºä¼ é€’å‚æ•°ï¼‰
-	push ax			; ä¿å­˜ALè¿›æ ˆ
-	shr al, 4			; AL >> 4 ï¼ˆé«˜ä½æ•°å­—ï¼‰
-	add al, 30h		; æ•°å­—å­—ç¬¦ = æ•°å€¼+=30h
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-	pop ax			; ä»Žæ ˆä¸­æ¢å¤AL
-	and al, 0Fh		; å–ALçš„ä½Ž4ä½
-	add al, 30h		; æ•°å­—å­—ç¬¦ = æ•°å€¼+=30h
-	call ShowChar_dt		; æ˜¾ç¤ºå­—ç¬¦
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-; -------------------------------------------------------------------
-ver: ; æ˜¾ç¤ºç‰ˆæƒä¿¡æ¯
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºç‰ˆæƒå­—ç¬¦ä¸² "MyOS 1.0 (C) 2015  Li Caiwei"
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str1 	; BP=ä¸²åœ°å€
-	mov cx, str1len	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-
-; -------------------------------------------------------------------
-ver0: ; æ˜¾ç¤ºç‰ˆæƒä¿¡æ¯
+	iret
+DispStr_Chinese:;ÔÚµ±Ç°Î»ÖÃÏÔÊ¾ºº×Ö ´®µØÖ·=BP ´®³¤=CX  
 	pusha
-	push dx
-	mov dh,0
-	; æ˜¾ç¤ºç‰ˆæƒå­—ç¬¦ä¸² "MyOS 1.0 (C) 2015  Li Caiwei"
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str1 	; BP=ä¸²åœ°å€
-	mov cx, str1len	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	pop dx
+	push es
+	push ds       ;±£´æÔ­¼Ä´æÆ÷ÐÅÏ¢£¬ÓÈÆäÊÇes dsµÄµØÖ·
+	mov ax,1000h
+	mov es,ax
+	mov ds,ax
+	xor ax,ax     ;ÏñËØµã*16=ÐÐÁÐºÅ
 	
-	mov ah,02h
+	push cx
+	mov ah,3      ;»ñÈ¡µ±Ç°¹â±êÎ»ÖÃ
 	mov bh,0
 	int 10h
-	popa
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-; -------------------------------------------------------------------
-cls: ; æ¸…å±
-	mov	ah, 6		; åŠŸèƒ½å·
-	mov	al, 0		; æ»šåŠ¨çš„æ–‡æœ¬è¡Œæ•°ï¼ˆ0=æ•´ä¸ªçª—å£ï¼‰
-	mov bh, 0fh		; è®¾ç½®æ’å…¥ç©ºè¡Œçš„å­—ç¬¦é¢œè‰²ä¸ºé»‘åº•äº®ç™½å­—
-	mov cx, 0		; çª—å£å·¦ä¸Šè§’çš„è¡Œå·=CHã€åˆ—å·=CL
-	mov dh, 24		; çª—å£å³ä¸‹è§’çš„è¡Œå·
-	mov dl, 79		; çª—å£å³ä¸‹è§’çš„åˆ—å·
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; è®¾ç½®å…‰æ ‡ä½ç½®
-	mov ah, 2		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	mov dh, 0		; è¡Œå·
-	mov dl, 0		; åˆ—å·
-	int 10h			; æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-	
-; -------------------------------------------------------------------
-diskok: ; åˆ¤æ–­åˆ‡æ¢åˆ°çš„ç›®æ ‡ç£ç›˜æ˜¯å¦å­˜åœ¨ï¼ˆè¾“å…¥å‚æ•°ä¸ºDL=ç£ç›˜çš„é©±åŠ¨å™¨å·ï¼‰
-	; åˆ©ç”¨ç£ç›˜çš„0å·ä¸­æ–­åˆ¤æ–­ç£ç›˜æ˜¯å¦å­˜åœ¨
-	mov ah, 0		; åŠŸèƒ½å·=0ï¼šç£ç›˜å¤ä½ï¼ˆå‡ºé”™ç½®CFæ ‡å¿—ä½ï¼‰
-	int 13h			; è°ƒç”¨13Hå·ç£ç›˜ä¸­æ–­
-	jc .1			; CF=1 ç£ç›˜ä¸å­˜åœ¨ï¼Œåˆ‡æ¢ç£ç›˜å¤±è´¥
-	; ç£ç›˜å­˜åœ¨æ—¶ï¼Œè¿”å›žåˆ‡æ¢ç£ç›˜ä¾‹ç¨‹
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-	
-.1: ; ç£ç›˜ä¸å­˜åœ¨æ—¶ï¼Œæ˜¾ç¤ºå‡ºé”™ä¿¡æ¯åŽï¼Œé€€å‡ºå¾ªçŽ¯ï¼Œé‡æ–°å¼€å§‹
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºç£ç›˜ä¸å­˜åœ¨çš„ä¿¡æ¯ "Disk not exist!"
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str5 	; BP=ä¸²åœ°å€
-	mov cx, str5len	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; é€€å‡ºå¾ªçŽ¯ï¼Œé‡æ–°å¼€å§‹
-	add sp, 4		; å¼¹å‡ºä¸¤æ¬¡callçš„è¿”å›žåœ°å€
-	jmp again		; é‡æ–°å¼€å§‹
-	
-str5: ; å­—ç¬¦ä¸²5ï¼ˆç£ç›˜ä¸å­˜åœ¨ä¿¡æ¯ä¸²ï¼‰
-	db 'Disk not exist!'
-str5len equ $ - str5 ; ç£ç›˜ä¸å­˜åœ¨ä¸²é•¿
+	pop cx
+	mov al,dh
+	mov bl,16
+	mul bl
+	mov [line_char],ax
+	xor ax,ax
+	mov al,dl
+	mov bl,16
+	mul bl
+	mov [col_char],ax
+	mov [disp_data_len],cx
+	mov byte[color_char],0fh
+	shl cx,1      ;CX*2==×Ö·û´®×Ö½ÚÊý
 
-; -------------------------------------------------------------------
-toa: ; æ”¹ä¸ºAç›˜
-	mov dl, 0		; è½¯ç›˜Açš„é©±åŠ¨å™¨å·=0
-	call diskok		; å¦‚æžœç£ç›˜ä¸å­˜åœ¨ï¼Œå°±ä¸åˆ‡æ¢ç£ç›˜ï¼Œå¦åˆ™ç»§ç»­ï¼š
-	mov byte [str2], 'A' ; ä¿®æ”¹æç¤ºä¸²é¦–å­—æ¯ä¸ºA
-	mov byte [drvno], 0 ; è®¾ç½®é©±åŠ¨å™¨å·ä¸º0
-	call getdiskparam	; èŽ·å–ç£ç›˜å‚æ•°H&Sï¼ˆç”¨äºŽReadSecå’Œlsä¾‹ç¨‹ï¼‰
-	add sp, 2		; å¼¹å‡ºcallçš„è¿”å›žåœ°å€
-
-	;ä¿®æ”¹ç›®å½•æç¤ºä¸²
-	mov di,str2
-	add di,3
-	mov al,'$'
-	stosb
-	mov byte[str2len],4
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	inc dh
-	; è®¾ç½®å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-
-    call initialDisk
-	
-	jmp again		; é‡æ–°å¼€å§‹
-	
-; -------------------------------------------------------------------
-tob: ; æ”¹ä¸ºBç›˜
-	mov dl, 1		; è½¯ç›˜Bçš„é©±åŠ¨å™¨å·=1
-	call diskok		; å¦‚æžœç£ç›˜ä¸å­˜åœ¨ï¼Œå°±ä¸åˆ‡æ¢ç£ç›˜ï¼Œå¦åˆ™ç»§ç»­ï¼š
-	mov byte [str2], 'B' ; ä¿®æ”¹æç¤ºä¸²é¦–å­—æ¯ä¸ºB
-	mov byte [drvno], 1 ; è®¾ç½®é©±åŠ¨å™¨å·ä¸º1
-	call getdiskparam	; èŽ·å–ç£ç›˜å‚æ•°H&Sï¼ˆç”¨äºŽReadSecå’Œlsä¾‹ç¨‹ï¼‰
-	add sp, 2		; å¼¹å‡ºcallçš„è¿”å›žåœ°å€
-	;ä¿®æ”¹ç›®å½•æç¤ºä¸²
-	mov di,str2
-	add di,3
-	mov al,'$'
-	stosb
-	mov byte[str2len],4
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	inc dh
-	; è®¾ç½®å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	
-	call initialDisk
-	
-	jmp again		; é‡æ–°å¼€å§‹
-
-; -------------------------------------------------------------------
-toc: ; æ”¹ä¸ºCç›˜
-	mov dl, 80h		; ç¡¬ç›˜Cçš„é©±åŠ¨å™¨å·=80h
-	call diskok		; å¦‚æžœç£ç›˜ä¸å­˜åœ¨ï¼Œå°±ä¸åˆ‡æ¢ç£ç›˜ï¼Œå¦åˆ™ç»§ç»­ï¼š
-	mov byte [str2], 'C' ; ä¿®æ”¹æç¤ºä¸²é¦–å­—æ¯ä¸ºC
-	mov byte [drvno], 80h ; è®¾ç½®é©±åŠ¨å™¨å·ä¸º80h
-	call getdiskparam	; èŽ·å–ç£ç›˜å‚æ•°H&Sï¼ˆç”¨äºŽReadSecå’Œlsä¾‹ç¨‹ï¼‰
-	add sp, 2		; å¼¹å‡ºcallçš„è¿”å›žåœ°å€
-	;ä¿®æ”¹ç›®å½•æç¤ºä¸²
-	mov di,str2
-	add di,3
-	mov al,'$'
-	stosb
-	mov byte[str2len],4
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	inc dh
-	; è®¾ç½®å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	
-	call initialDisk
-	
-	jmp again		; é‡æ–°å¼€å§‹
-
-;---------------------------------------------------------------------
-initialDisk;        ;åˆå§‹åŒ–lsç”¨åˆ°çš„å‚æ•°
-	pusha
-	call ReadPBootSec
-	; nsecä¸ºæ ¹ç›®å½•åŒºå‰©ä½™æ‰‡åŒºæ•°ï¼Œåˆå§‹åŒ–ä¸ºæ ¹ç›®å½•æ‰‡åŒºæ•°ï¼Œåœ¨å¾ªçŽ¯ä¸­ä¼šé€’å‡è‡³é›¶
-	; è®¡ç®—æ ¹ç›®å½•æ‰‡åŒºæ•°ï¼ˆ = æœ€å¤§æ ¹ç›®å½•é¡¹æ•° / 32ï¼‰
-	mov ax, [Sector + 11h]	; AX = æœ€å¤§æ ¹ç›®å½•é¡¹æ•°
-	shr ax, 4				; AXå³ç§»4ä½ï¼ˆ~ /32ï¼‰ = æ ¹ç›®å½•æ‰‡åŒºæ•°
-	mov word [nsec], ax		; nsec = AX = æ ¹ç›®å½•æ‰‡åŒºæ•°
-
-	; isecä¸ºå½“å‰æ‰‡åŒºå·ï¼Œèµ‹åˆå€¼ä¸ºæ ¹ç›®å½•åŒºçš„é¦–æ‰‡åŒºå·ï¼Œåœ¨å¾ªçŽ¯ä¸­ä¼šé€ä¸ªå¢žåŠ 
-	; è®¡ç®—æ ¹ç›®å½•é¦–æ‰‡åŒºå·ï¼ˆ= ä¿ç•™æ‰‡åŒºæ•° + FATæ•° * FATå æ‰‡åŒºæ•°ï¼‰
-	movzx ax, byte [Sector + 10h] ; AX = FATæ•°
-	mul word [Sector + 16h]	; AX *= FATå æ‰‡åŒºæ•°
-	add ax, [Sector + 0Eh]	; AX += ä¿ç•™æ‰‡åŒºæ•°
-	mov [isec],ax			; isec = AX = æ ¹ç›®å½•é¦–æ‰‡åŒºå·
+	mov di,disp_data
+	mov si,bp
+	;es=µ÷ÓÃ³ÌÐò¶Î SI=BP²»±ä
+	repe movsb
+	call HZK16_test
+	pop ds
+	pop es
 	popa
 	ret
-;--------------------------------------------------------------------
-dir: ; æ˜¾ç¤ºæ ¹ç›®å½•æ–‡ä»¶
-	call showbpb	; æ˜¾ç¤ºç£ç›˜ä¿¡æ¯
-	call ls			; æ˜¾ç¤ºç£ç›˜æ–‡ä»¶ä¿¡æ¯åˆ—è¡¨
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
-;--------------------------------------------------------------------
-; å®šä¹‰å˜é‡ï¼ˆç£ç›˜å‚æ•°ï¼‰
-CurrentDirSectors	dw	14		; å½“å‰ç›®å½•å ç”¨çš„æ‰‡åŒºæ•°
-SectorNoOfCurrentDirectory	dw	19	; å½“å‰ç›®å½•åŒºçš„é¦–æ‰‡åŒºå·
-iCurrentDirSectors  dw 0       ;å¾…è®¡ç®—çš„ä¸‹ä¸€ç›®å½•æ‰€å æ‰‡åŒºæ•°
-Dir_len dw 0
-cdToDir:   ;è·³è‡³å­ç›®å½•    X:/$å­ç›®å½•
+; ============================AH=42h=======================================END
+AH_NULL:
+	
+	iret
 
-	pusha
-	mov cx,buflen
+; -------------------------------------------------------------------
+getdiskparam: ; »ñÈ¡´ÅÅÌ²ÎÊýH/S
+	call ReadPBootSec		; µ÷ÓÃ¶ÁÈë´ÅÅÌ·ÖÇøÒýµ¼ÉÈÇøÀý³Ì
+	mov ax, [Sector + 18h]	; AX = Ã¿´ÅµÀÉÈÇøÊý
+	mov [secspt], ax		; secspt = AX = Ã¿´ÅµÀÉÈÇøÊý
+	mov ax, [Sector + 1Ah]	; AX = ´ÅÍ·Êý
+	mov [heads], ax			; heads = AX = ´ÅÍ·Êý
+	ret						; ´ÓÀý³Ì·µ»Ø
+	
+; -------------------------------------------------------------------
+newline: ; »»ÐÐ£¨ÏÔÊ¾»Ø³µ·ûºÍ»»ÐÐ·û£©
+	; ÏÔÊ¾»Ø³µ·ûCR£¨ÖÃµ±Ç°ÁÐºÅ=0£©
+	mov ah, 0Eh 	; ¹¦ÄÜºÅ
+	mov al, 0Dh 	; ÉèÖÃALÎª»Ø³µ·ûCR£¨ASCIIÂëÎª0DH£©
+	mov bl, 0fh 	; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾»»ÐÐ·û£¨µ±Ç°ÐÐºÅ++£©
+	mov ah, 0Eh 	; ¹¦ÄÜºÅ
+	mov al, 0Ah 	; ÉèÖÃALÎª»»ÐÐ·ûLF£¨ASCIIÂëÎª0AH£©
+	mov bl, 0fh 	; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+
+; -------------------------------------------------------------------
+space: ; ÏÔÊ¾¿Õ¸ñ·û
+	mov ah, 0Eh 	; ¹¦ÄÜºÅ
+	mov al, 20h 	; ÉèÖÃALÎª¿Õ¸ñ·ûSP£¨ASCIIÂëÎª20H£©
+	mov bl, 0fh 	    ; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret			; ´ÓÀý³Ì·µ»Ø
+	
+; -------------------------------------------------------------------
+showwrong: ; ÏÔÊ¾³ö´íÐÅÏ¢
+	;call newline 	; »Ø³µ»»ÐÐ
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾³ö´íÐÅÏ¢´®
+	;mov ah, 13h 	; ¹¦ÄÜºÅ
+	;mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	;mov bl, 0fh 	; ÁÁ°×
+	;mov bh, 0 		; µÚ0Ò³
+	;mov dl, 0 		; µÚ0ÁÐ
+	;mov bp, str3 	; BP=´®µØÖ·
+	;mov cx, str3len	; ´®³¤
+	;int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	;mov cx,buflen
 	mov bp,buf
-	add bp,3   ;è·³è¿‡cd  ä¸‰ä¸ªå­—ç¬¦
-	cmp byte[bp],'\'
-	jz backToRoot
-	push bp    ;ä¿å­˜bp
+	push bp    ;±£´æbp
+	push si
 	mov si,0
-.1  
+.1:  
 	cmp byte[bp],20h
 	jz .2
 	cmp byte[bp],0
@@ -881,10 +760,1293 @@ cdToDir:   ;è·³è‡³å­ç›®å½•    X:/$å­ç›®å½•
 	inc si
 	inc bp
 	jmp .1
-.2
+.2:
+	mov cx,si       ;¼ÆËãÃüÁî´®³¤
+	pop si
+	pop bp
+	call DispStr
+	mov ah, 0Eh 	; ¹¦ÄÜºÅ
+	mov al, ':' 	; ÉèÖÃALÎª¿Õ¸ñ·ûSP£¨ASCIIÂëÎª20H£©
+	mov bl, 0fh 	    ; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	mov ah, 2		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	add dl,1
+	shr dl,1
+	mov bp,str3_chin
+	mov cx,str3len_chin
+	mov bl,0fh
+	;add dh,5
+	;pop dx
+	;mov dl,0
+	;mov dh,25
+	;call DispStr_Chinese
+	mov ah,42h
+	int 21h
+	ret				; ´ÓÀý³Ì·µ»Ø
+;--------------------------------------------------------------------
+showError1: ;ÏÔÊ¾³ö´íÐÅÏ¢ ÌáÊ¾´®³¤=cx ,ÌáÊ¾´®Æ«ÒÆ=bp
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾³ö´íÐÅÏ¢´®
+	
+	mov ah, 42h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str10_chin	; BP=´®µØÖ·
+	mov cx, str10len_chin	; ´®³¤
+	int 21h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+;--------------------------------------------------------------------
+showError2: ;ÏÔÊ¾³ö´íÐÅÏ¢ ÌáÊ¾´®³¤=cx ,ÌáÊ¾´®Æ«ÒÆ=bp
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾³ö´íÐÅÏ¢´®
+	
+	mov ah, 42h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str11_chin	; BP=´®µØÖ·
+	mov cx, str11len_chin	; ´®³¤
+	int 21h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+; -------------------------------------------------------------------
+showtoolong: ; ÏÔÊ¾Ì«³¤ÐÅÏ¢
+	call newline 	; »Ø³µ»»ÐÐ
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾Ì«³¤ÐÅÏ¢´®
+	mov ah, 42h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str4_chin	; BP=´®µØÖ·
+	mov cx, str4len_chin	; ´®³¤
+	int 21h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+Store_dc:
+	pusha
+	mov bx, 0x70	; BX = 70h£¨ÖÐ¶ÏºÅ£©
+	shl bx, 2		; BX << 2£¨BX *= 4£© 
+	cli				; ¹Ø±ÕÖÐ¶Ï£¬·ÀÖ¹¸Ä¶¯ÆÚ¼ä·¢ÉúÐÂµÄ0x70ºÅÖÐ¶Ï
+	; ÉèÖÃ70hºÅÖÐ¶ÏµÄÐÂÏòÁ¿
+	push es			; ±£´æESÈëÕ»
+	xor ax, ax		; AX = 0
+	mov es, ax		; ES = AX = 0
+	mov ax,[es:bx+2]
+	mov [Address_70h],ax
+	mov ax,[es:bx]
+	mov [Address_70h_offset],ax
+	pop es
+	popa
+	sti
+	ret
+Address_70h dw 0
+Address_70h_offset dw 0
+Shut_dc:
+	pusha
+	mov bx, 0x70	; BX = 70h£¨ÖÐ¶ÏºÅ£©
+	shl bx, 2		; BX << 2£¨BX *= 4£© 
+	cli				; ¹Ø±ÕÖÐ¶Ï£¬·ÀÖ¹¸Ä¶¯ÆÚ¼ä·¢ÉúÐÂµÄ0x70ºÅÖÐ¶Ï
+	; ÉèÖÃ70hºÅÖÐ¶ÏµÄÐÂÏòÁ¿
+	push es			; ±£´æESÈëÕ»
+	xor ax, ax		; AX = 0
+	mov es, ax		; ES = AX = 0
+	mov ax,[Address_70h]
+	mov [es:bx+2],ax
+	mov ax,[Address_70h_offset]
+	mov [es:bx],ax
+	pop es
+	popa
+	sti
+	ret
+BackToCmd:      ;ÉèÖÃ¹â±êÑÕÉ«
+	pusha 
+	;mov ax,0bh  
+	;mov bh,00
+	;mov bl,0h
+	;int 10h
+	popa
+	call _dc
+	ret
+;--------------------------------------------------------------------
+; Ð¡ÐÍ¸¨ÖúÀý³Ì½áÊø
+; ===================================================================
+
+	
+; ===================================================================
+; ÄÚ²¿ÃüÁîÀý³Ì¿ªÊ¼
+;-------------------------------------------------------------------------------
+; ÎÄ¼þÃû×Ö·û´®
+FileName_HZK:		db	"HZK16          " ; ×Ö¿âÎÄ¼þÃû
+BaseOfFile_HZK	dw	3000h; ×Ö¿âÎÄ¼þ±»¼ÓÔØµ½µÄÎ»ÖÃ ----  ¶ÎµØÖ·
+OffsetOfFile_HZK  equ 0h
+Current_Base_HZK  dw 0
+Current_Offset_HZK  dw 0
+Original_Base_HZK dw 3000h
+count db 0
+BaseOfBuf_HZK		equ 8800h	; ÓÃÓÚ²éÕÒÎÄ¼þÌõÄ¿µÄ»º³åÇø ---- »ùµØÖ·
+OffsetOfBuf_HZK	equ	0		; ÓÃÓÚ²éÕÒÎÄ¼þÌõÄ¿µÄ»º³åÇø ---- Æ«ÒÆµØÖ·
+int21Name1 db 0dh,0ah,'Loading HZK16  '
+int21Name1Len equ $-int21Name1
+int21Name2 db 'Reading Word'
+int21Name2Len equ $-int21Name2
+int21Name3 db 'Setting Point'
+int21Name3Len equ $-int21Name3
+int21Name4 db 'Load Finish'
+int21Name4Len equ $-int21Name4
+int21Name5 db 'No file'
+int21Name5Len equ $-int21Name5
+GS_TEMP dw 0
+; ====================================================================
+int213dh:
+	push es		; ±£»¤ES
+
+; ÈíÇý¸´Î»
+	xor	ah, ah	; ¹¦ÄÜºÅah=0£¨¸´Î»´ÅÅÌÇý¶¯Æ÷£©
+	xor	dl, dl	; dl=0£¨ÈíÇýA£¬ÈíÇýBÎª1¡¢Ó²ÅÌºÍUÅÌÎª80h£©
+	int	13h		; ´ÅÅÌÖÐ¶Ï
+	
+; ÏÂÃæÔÚ´ÅÅÌÄ¿Â¼ÖÐÑ°ÕÒ ×Ö¿âÎÄ¼þ
+	;ÅÐ¶ÏÊÇ¸ùÄ¿Â¼»òÕß×ÓÄ¿Â¼
+	push ax
+	mov ax,[SectorNoOfCurrentDirectory] 	; ¸ø±íÊ¾µ±Ç°ÉÈÇøºÅµÄ
+	mov	word [wSectorNo], ax
+						; ±äÁ¿wSectorNo¸³³õÖµÎªµ±Ç°Ä¿Â¼ÇøµÄÊ×ÉÈÇøºÅ
+	mov ax, [CurrentDirSectors]	; Ê£ÓàÉÈÇøÊý
+	mov word [wRootDirSizeForLoop],ax
+										; ³õÊ¼»¯Îªµ±Ç°Ä¿Â¼ËùÕ¼ÉÈÇøÊý£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+	pop ax
+LABEL_SEARCH_IN_ROOT_DIR_BEGIN_HZK:
+	cmp	word [wRootDirSizeForLoop], 0 ; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	LABEL_NOT_FOUND_HZK	; Èô¶ÁÍêÔò±íÊ¾Î´ÕÒµ½×Ö¿âÎÄ¼þ
+	dec	word [wRootDirSizeForLoop]	; µÝ¼õ±äÁ¿wRootDirSizeForLoopµÄÖµ
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸öÄ¿Â¼ÉÈÇøµ½×°ÔØÇø
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
+
+	mov	si, FileName_HZK		; DS:SI -> ×Ö¿âÎÄ¼þ
+	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
+	cld					; Çå³ýDF±êÖ¾Î»
+						; ÖÃ±È½Ï×Ö·û´®Ê±µÄ·½ÏòÎª×ó/ÉÏ[Ë÷ÒýÔö¼Ó]
+	mov	dx, 10h			; Ñ­»·´ÎÊý=16£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
+LABEL_SEARCH_FOR_COM_FILE_HZK:
+	cmp	dx, 0			; Ñ­»·´ÎÊý¿ØÖÆ
+	jz LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR_HZK ; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø
+	dec	dx				; µÝ¼õÑ­»·´ÎÊýÖµ			  ¾ÍÌøµ½ÏÂÒ»ÉÈÇø
+	mov	cx, 11			; ³õÊ¼Ñ­»·´ÎÊýÎª11
+LABEL_CMP_FILENAME_HZK:
+	repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	cmp	cx, 0
+	jz	LABEL_FILENAME_FOUND_HZK ; Èç¹û±È½ÏÁË11¸ö×Ö·û¶¼ÏàµÈ£¬±íÊ¾ÕÒµ½
+LABEL_DIFFERENT_HZK:
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+						; FFE0h = 1111111111100000£¨µÍ5Î»=32=Ä¿Â¼ÌõÄ¿´óÐ¡£©
+	add	di, 20h			; DI += 20h ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	mov	si, FileName_HZK		; SIÖ¸Ïò×°ÔØÎÄ¼þÃû´®µÄÆðÊ¼µØÖ·
+	jmp	LABEL_SEARCH_FOR_COM_FILE_HZK; ×ªµ½Ñ­»·¿ªÊ¼´¦
+
+LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR_HZK:             ;ssssss
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
+	pusha
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[wSectorNo]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	LABEL_NOT_FOUND_HZK ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [wSectorNo],ax
+	add	word [wSectorNo],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	LABEL_SEARCH_IN_ROOT_DIR_BEGIN_HZK		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc	word [wSectorNo]	; ¶ÔÓÚ¸ùÄ¿Â¼£¬µÝÔöµ±Ç°ÉÈÇøºÅ
+	
+	jmp	LABEL_SEARCH_IN_ROOT_DIR_BEGIN_HZK
+
+LABEL_NOT_FOUND_HZK:
+	pop es			; »Ö¸´ES
+	;call showwrong	; ÏÔÊ¾×Ö·û´®
+	;jmp $
+	ret
+
+; ÏÂÃæ½«×Ö¿âÎÄ¼þ¼ÓÔØµ½ÄÚ´æ
+LABEL_FILENAME_FOUND_HZK:	; ÕÒµ½ ×Ö¿âÎÄ¼þºó±ãÀ´µ½ÕâÀï¼ÌÐø
+	; ¼ÆËãÎÄ¼þµÄÆðÊ¼ÉÈÇøºÅ
+	mov	ax, [CurrentDirSectors]	; AX=µ±Ç°Ä¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+	and	di, 0FFE0h		; DI -> µ±Ç°ÌõÄ¿µÄ¿ªÊ¼µØÖ·
+	add	di, 1Ah			; DI -> ÎÄ¼þµÄÊ×ÉÈÇøºÅÔÚÌõÄ¿ÖÐµÄÆ«ÒÆµØÖ·
+	mov cx, word [es:di] ; CX=ÎÄ¼þµÄÊ×ÉÈÇøºÅ
+	push cx				; ±£´æ´ËÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	add	cx, RootDirSectors			; CX=ÎÄ¼þµÄÏà¶ÔÆðÊ¼ÉÈÇøºÅ+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý +¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+	;ÖØÒªµÄÊÂÇéËµÒ»Íò±é=_=,ÕÒÕâ¸öbugÓÃÁË¼¸Ð¡Ê±   Ô­´úÂëadd	cx,ax   ÏÖÔÚ×ÓÄ¿Â¼ax²¢²»ÊÇ¸ùÄ¿Â¼Ê×ÉÈÇøºÅ
+	add	cx, DeltaSectorNo ; CL <- COMÎÄ¼þµÄÆðÊ¼ÉÈÇøºÅ(0-based)
+	mov	ax, [BaseOfFile_HZK]      ;+1C
+	mov	es, ax			; ES <- BaseOfLoader£¨COM³ÌÐò»ùÖ·=4000h£©
+	mov	bx, OffsetOfFile_HZK ; BX <- OffsetOfLoader£¨COM³ÌÐòÆ«ÒÆµØÖ·=100h£©
+	mov	ax, cx			; AX <- ÆðÊ¼ÉÈÇøºÅ
+LABEL_GOON_LOADING_FILE_HZK:
+	push bx				; ±£´æ×Ö¿â³ÌÐòÆ«ÒÆµØÖ·
+	mov	cl, 1			; 1¸öÉÈÇø
+	call ReadSec		; ¶ÁÉÈÇø
+
+	; ¼ÆËãÎÄ¼þµÄÏÂÒ»ÉÈÇøºÅ
+	pop bx				; È¡³ö×Ö¿â³ÌÐòÆ«ÒÆµØÖ·
+	pop	ax				; È¡³ö´ËÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	cmp	ax, 0FF8h		; ÊÇ·ñÊÇÎÄ¼þ×îºó´Ø
+	jae	LABEL_FILE_LOADED_HZK ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	push ax				; ±£´æÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	mov	dx, RootDirSectors	; DX = ¸ùÄ¿Â¼ÉÈÇøÊý
+	add	ax, dx			; ÉÈÇøÐòºÅ + ¸ùÄ¿Â¼ÉÈÇøÊý
+	add	ax, DeltaSectorNo ; AX = Òª¶ÁµÄÊý¾ÝÉÈÇøµØÖ·
+	;add	bx, [BPB_BytsPerSec] ; BX+512Ö¸Ïò×Ö¿âµÄÏÂÒ»¸öÉÈÇøµØÖ·
+	mov bx,0
+nextPara:
+	push ax
+	mov ax,es
+	add ax,20h
+	mov es,ax
+	pop ax
+nextParaEnd:
+    pusha
+	call start
+	popa
+	jmp	LABEL_GOON_LOADING_FILE_HZK
+
+; ÏÂÃæÌø×ªÖ´ÐÐCOM³ÌÐò
+LABEL_FILE_LOADED_HZK:
+	pop es
+	;add sp,2
+	;jmp	BaseOfLoader:OffsetOfLoader	; ÕâÒ»¾äÌø×ªµ½ÒÑ¼ÓÔØµ½ÄÚ´æÖÐµÄ
+	ret
+;------------------------------------------------------------------------------------------------
+;21ºÅÖÐ¶Ï ¹¦ÄÜºÅah=42h
+line_char DW 2    ;ÔÚÆÁÄ»ÉÏµÚ¼¸ÐÐÏÔÊ¾
+col_char DW 2    ;ÔÚÆÁÄ»ÉÏµÚ¼¸ÁÐÏÔÊ¾
+color_char db 0FH  ;ÏÔÊ¾ÑÕÉ«    LRGB
+HZK16_test:
+  pusha
+  jmp install
+  disp_data1 DB  'ÁÎÎ¬Ã÷'  
+  disp_data resb 1024   ;ºº×Ö»º³åÇø£¬´æ·ÅÒªÏÔÊ¾µÄºº×Ö
+  disp_data_len dw 0   ;ºº×Ö×Ö·û´®³¤
+  ;chars EQU ($-disp_data)/2
+  ;DISP_DATA_END EQU THIS BYTE
+  zi_buffer resb 1280  ;Ò»ÐÐ¿ÉÏÔÊ¾40¸öºº×Ö,40*32b=1280byte
+  OriginalBase dw 3000h
+install:
+  mov ax,1000h
+  mov es,ax
+  mov ds,ax
+  
+  mov si,disp_data
+  mov di,zi_buffer
+  mov cx,[disp_data_len]
+  cld
+ins2:
+  push cx
+  mov ah,[si]
+  inc si
+  mov al,[si]
+  inc si  
+  
+  call get_dots    ;¶Á³öºº×ÖµãÕë
+  pop cx
+  loop ins2
+  call disp_cc    ;ÏÔÊ¾µ½ÆÁÄ»
+;sloop0:
+  ;mov ah,01
+  ;int 16h
+  ;cmp al,'s'
+  ;jz out_
+  ;jmp sloop0
+out_:
+  ;mov ax,3
+  ;int 10h
+  mov ax,1000h
+  mov es,ax
+  mov ds,ax
+  pusha
+  mov ah,3
+  mov bh,0
+  int 10h
+  mov ax,[col_char]
+  mov bl,8     ;×ª»¯Îª×ÖÄ¸ÁÐºÅ
+  div bl
+  add ax,[disp_data_len]
+  add ax,[disp_data_len]
+  mov dl,al
+  mov ah,2
+  mov bh,0
+  int 10h
+  popa
+  
+  popa
+  ret
+  
+get_dots:
+  pusha
+  push es
+  push ds
+  sub ax,0a1a1h   ;ºº×ÖµÄÄÚÂë´Ó A1Çø¿ªÊ¼
+  cwd  ;ax?©å??°dxï¼Œax
+  mov dl,al    ;ËùÒÔ¾ø¶Ô¿ªÊ¼ÇøÊÇÄÚÂë-A1
+  mov al,ah    ;µãÕóÔÚ×Ö¿âÖÐµÄÎ»ÖÃÎª 
+  cbw
+  mov bl,94    ;£¨£¨ºº×ÖÂë1-A1£©* 94 + ºº×ÖÂë2 - A1£©* 32
+  mul bl
+  add ax,dx
+  mov bx,32
+  mul bx  ;   dxï¼Œax
+  mov cx,dx  ;cxï¿?
+  mov dx,ax  ;dxï¿?
+  ;mov ax,4200h    ;ÒÆ¶¯¶ÁÐ´Ö¸Õëµ½µãÕóÊý¾ÝÎ»ÖÃ
+  call Int21h
+  pop ds
+  pop es
+  popa
+  add di,32
+  ret
+
+disp_cc:     ;6666
+  mov cx,[disp_data_len]
+  mov si,zi_buffer
+  mov bx,[col_char]
+  sub bx,16   ;BX = column
+dh_lop0:
+  add bx,16    ;every char column+20
+  push cx
+  mov cx,16      ;l6 lines/char
+  mov dx,[line_char]      ;DX = start line
+dh_lop1:
+  push bx
+  push cx
+  lodsb         ;16 dots/line
+  mov ah,al
+  lodsb
+  mov cx,16
+dh_lop2:
+  shl ax,1
+  push ax
+  push bx
+  push cx
+  jc db_color
+  xor al,al          ;back color is 0
+  jmp short db_draw
+db_color:
+  mov al,[color_char]
+db_draw:
+  mov ah,0ch
+  mov cx,bx
+  xor bh,bh
+  int 10h
+  pop cx
+  pop bx
+  pop ax
+  inc bx   ;inc column
+  loop dh_lop2
+  inc dx   ;next line
+  pop cx
+  pop bx
+  loop dh_lop1
+  pop cx
+  loop dh_lop0
+  
+  ;mov cx,5
+  ;mov si,0
+;.21
+  ;push cx
+  ;mov cx,es
+  ;mov dx,zi_buffer
+  ;add dx,si
+  ;add si,16
+  ;call ReadMemmory_CHINESE
+  ;call space
+  ;call space
+  ;call space
+  ;call space
+  ;call space
+  ;call space
+  ;pop cx
+  ;loop .21
+  ;mov cx,4000h
+  ;mov dx,0b040h
+  ;call ReadMemmory_CHINESE
+  ;mov ah,0
+  ;int 16h
+  ret
+Int21h:
+	pusha
+	push ds
+	push es
+
+	;mov ax,ds
+	;mov es,ax    ;ES  DIÎªÄ¬ÈÏÖµ
+	
+	;mov ax,[OriginalBase]
+	push bx
+	push cx
+	mov ax,0
+	mov bx,0
+	shrd bx,cx,4
+	add ax,bx
+	add ax,[OriginalBase]
+	mov ds,ax    ;DS=3000h+CX*1000h
+	
+	pop cx
+	pop bx
+	;push ax
+	;mov al,ah
+	;call hex2ascii
+	;pop ax
+	;call hex2ascii
+	
+	mov si,dx	 ;SI=DX
+
+	;push ax
+	;mov al,dh
+	;call hex2ascii
+	;mov al,dl
+	;call hex2ascii
+	;pop ax
+	
+	mov bx,0
+	cld
+.1:
+	mov al,[ds:si]
+	;mov al,0fah
+	;call hex2ascii
+	mov [es:di],al
+	inc si
+	inc di
+	inc bx
+	cmp bx,32
+	jz Int21h_Out
+	jmp .1
+Int21h_Out:
+	pop es
+	pop ds
+	popa
+	ret
+; -------------------------------------------------------------------
+ReadMemmory_CHINESE:   ;ÏÔÊ¾ CX:DX´¦16×Ö½ÚµÄÄÚ´æÐÅÏ¢
+	pusha
+	push ds
+	mov ax,cx
+	mov ds,ax
+	mov si,dx
+	mov di,0
+.1:
+	lodsb
+	;mov al,0fah
+	call hex2ascii
+	inc di
+	cmp di,16
+	jz ReadMemmory_Out_CHINESE
+	call space
+	jmp .1
+ReadMemmory_Out_CHINESE:
+	pop ds
+	popa
+	ret
+; -------------------------------------------------------------------
+;-------------------------------------------------------------------------------
+hex2ascii:  ;16½øÖÆ×ªASCII£¨ÊäÈë£ºAL = BCDÂë£¬Êä³ö£ºAX = ASCII£©
+	pusha
+	push ds
+	push es
+	push ax
+	mov ax,1000h
+	mov es,ax
+	mov ds,ax
+	pop ax
+	mov dx,ax
+	mov dh,dl
+	push dx
+	;------»ñÈ¡¸ßËÄÎ»---------;
+	mov bx,0
+	;shld bx,dx,4
+	mov bx,dx
+	shr bx,4
+	and bl,0fh
+	mov al,bl
+	call ShowChar_HZK
+	;------»ñÈ¡µÍËÄÎ»---------;
+	mov bx,0
+	mov bx,dx
+	and bl,0fh
+	mov al,bl
+	call ShowChar_HZK
+	
+	pop dx
+	
+	POP ES
+	POP ds
+	popa
+	ret
+;-------------------------------------------------------------------------------
+Restart: ;ÖØÆô²Ù×÷ÏµÍ³
+	int 19h
+	ret
+; -------------------------------------------------------------------	
+; ÏÔÊ¾µ¥¸öÊ®Áù½øÖÆ×Ö·ûº¯Êý
+ShowChar_HZK: ; ÏÔÊ¾Ò»¸öÊ®Áù½øÖÆÊý×Ö·û£º0~9¡¢A~F£¨ÒÔALÎª´«µÝ²ÎÊý£©
+	cmp al, 10		; AL < 10 ?
+	jl .1			; AL < 10£ºÌø×ªµ½.1
+	add al, 7		; AL >= 10£ºÏÔÊ¾×ÖÄ¸£¨ = ÊýÖµ += 37h£©
+.1: ; Êý×Ö
+	add al, 30h		; Êý×Ö×Ö·û = ÊýÖµ+=30h
+	mov ah, 0Eh		; ¹¦ÄÜºÅ£¨ÒÔµç´«·½Ê½ÏÔÊ¾µ¥¸ö×Ö·û£©
+	mov bl, 0fh 	; ¶ÔÎÄ±¾·½Ê½ÖÃ0
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+; -------------------------------------------------------------------
+;-------------------------------------------------------------------------------
+new_int_0x70_dc: ; 70hºÅÐÂÖÐ¶Ï´¦Àí³ÌÐòÈë¿Ú
+	; ±£´æ½«ÒªÊ¹ÓÃµÄ¼Ä´æÆ÷ÒÔÃâ±»ÆÆ»µ
+	push ax
+	push bx
+	push es
+	
+  wait0: ; ÅÐ¶ÏÊÇ·ñ¿É¶ÁÈÕÆÚÓëÊ±¼äÐÅÏ¢	
+	; ´Ë¶Î´úÂë¶ÔÓÚ¸üÐÂÖÜÆÚ½áÊøÖÐ¶ÏÀ´ËµÊÇ²»±ØÒªµÄ
+	mov al, 0x0a	; Ö¸¶¨¼Ä´æÆ÷A
+	or al, 0x80		; ×è¶ÏNMI¡£µ±È»£¬Í¨³£ÊÇ²»±ØÒªµÄ	   
+	out 0x70, al	; Êä³öALµ½¶Ë¿Ú70h£¬Ñ¡Ôñ¼Ä´æÆ÷A
+	in al, 0x71		; ¶Á¼Ä´æÆ÷A
+	test al, 0x80	; ²âÊÔµÚ7Î» = 0£¿ 
+	jnz wait0		; ¡Ù 0Ê±£¨ÈÕÆÚÓëÊ±¼äÔÚ¸üÐÂÖÐ£©ÐèµÈ´ý
+
+	; »ñÈ¡µ±Ç°µÄÊ±¼äÐÅÏ¢
+	; »ñÈ¡ÃëÐÅÏ¢
+	xor al, al		; AL = 0
+	out 0x70, al	; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 0x71		; ¶ÁRTCµ±Ç°Ê±¼ä(Ãë)
+	push ax			; ½«»ñÈ¡µÄÊý¾ÝALÑ¹Õ»±£´æ
+	; »ñÈ¡·ÖÐÅÏ¢
+	mov al, 2		; AL = 2
+	out 0x70, al	; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 0x71		; ¶ÁRTCµ±Ç°Ê±¼ä(·Ö)
+	push ax			; ½«»ñÈ¡µÄÊý¾ÝALÑ¹Õ»±£´æ
+	; »ñÈ¡Ê±ÐÅÏ¢
+	mov al, 4		; AL = 4
+	out 0x70, al	; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 0x71		; ¶ÁRTCµ±Ç°Ê±¼ä(Ê±)
+	push ax			; ½«»ñÈ¡µÄÊý¾ÝALÑ¹Õ»±£´æ
+	; ¶ÁÈ¡¼Ä´æÆ÷C
+	mov al, 0x0c	; Ö¸¶¨¼Ä´æÆ÷C£¬ÇÒ¿ª·ÅNMI 
+	out 0x70, al	; Êä³öALµ½¶Ë¿Ú70h£¬Ñ¡Ôñ¼Ä´æÆ÷C
+	in al, 0x71		; ¶ÁRTCµÄ¼Ä´æÆ÷C£¬·ñÔòÖ»·¢ÉúÒ»´ÎÖÐ¶Ï
+					; ´Ë´¦²»¿¼ÂÇÄÖÖÓºÍÖÜÆÚÐÔÖÐ¶ÏµÄÇé¿ö 
+	
+	; ÔÚÆÁÄ»ÓÒÉÏ½ÇÏÔÊ¾Ê±¼äÐÅÏ¢
+	; ÖÃES = ÏÔ´æ»ùÖ·
+	mov ax,0x1000	; AX = B800h£¨²ÊÉ«ÎÄ±¾ÆÁÄ»ÏÔ´æµÄÆðÊ¼µØÖ· >> 4£©
+	mov es,ax		; ES = AX = B800h£¨ES = ÏÔ´æ»ùÖ·£©
+	; ÉèÖÃÊ±¼ä´®µÄÆðÊ¼Î»ÖÃ
+	mov bx, (0*80 + 72)*2; ´ÓÆÁÄ»ÉÏµÄµÚ0ÐÐ72ÁÐ¿ªÊ¼ÏÔÊ¾
+	mov ah,3
+	mov bh,0
+	int 10h
+	mov [es:TEMP_DX],dx         ;±£´æ¹â±êÎ»ÖÃ
+	mov ah,2
+	mov dh,0
+	mov dl,72    
+	mov bh,0
+	int 10h  		;ÉèÖÃ¹â±êÎ»ÖÃÎª0 72
+	; ÏÔÊ¾Ê±
+	pop ax			; ´ÓÕ»ÖÐµ¯³öÊ±
+	call bcd2ascii	; µ÷ÓÃBCD×ªASCIIÀý³Ì
+	; ÏÔÊ¾Á½Î»Ð¡Ê±Êý×Ö
+	;mov [es:bx], ah
+	push ax
+	mov al,ah
+	call ShowChar_dt
+	pop ax
+	;mov [es:bx + 2], al
+	call ShowChar_dt
+	; ÏÔÊ¾·Ö¸ô·û':'
+	mov al,':'
+	;mov [es:bx + 4], al
+	call ShowChar_dt
+	; ÏÔÊ¾·Ö
+	pop ax			; ´ÓÕ»ÖÐµ¯³ö·Ö
+	call bcd2ascii	; µ÷ÓÃBCD×ªASCIIÀý³Ì
+	; ÏÔÊ¾Á½Î»·ÖÖÓÊý×Ö
+	;mov [es:bx + 6], ah
+	push ax
+	mov al,ah
+	call ShowChar_dt
+	pop ax
+	;mov [es:bx + 8], al
+	call ShowChar_dt
+	; ÏÔÊ¾·Ö¸ô·û':'
+	mov al,':'
+	;mov [es:bx + 10], al
+	call ShowChar_dt
+	; ÏÔÊ¾Ãë
+	pop ax			; ´ÓÕ»ÖÐµ¯³öÃë
+	call bcd2ascii	; µ÷ÓÃBCD×ªASCIIÀý³Ì
+	; ÏÔÊ¾Á½Î»Ð¡Ê±Êý×Ö
+	;mov [es:bx + 12], ah
+	push ax
+	mov al,ah
+	call ShowChar_dt
+	pop ax
+	;mov [es:bx + 14], al
+	call ShowChar_dt
+	
+	mov dx,[es:TEMP_DX]          ;»Ö¸´¹â±êÎ»ÖÃ
+	mov ah,2
+	mov bh,0
+	int 10h
+	; ·¢ËÍEOI¸ø8259A
+	mov al, 0x20	;ÖÐ¶Ï½áÊøÃüÁîEOI 
+	out 0xa0, al	;Ïò´ÓÆ¬·¢ËÍ 
+	out 0x20, al	;ÏòÖ÷Æ¬·¢ËÍ 
+
+	; »Ö¸´±£´æµÄ¼Ä´æÆ÷Öµ
+	pop es
+	pop bx
+	pop ax
+
+	iret			; ´ÓÖÐ¶Ï·µ»Ø
+TEMP_DX DW 0
+; -------------------------------------------------------------------
+_dt:
+	pusha 
+	; »ñÈ¡ÄêÐÅÏ¢
+	mov al, 9			; ÄêµÄÆ«ÒÆµØÖ·Îª9
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÄêÐÅÏ¢
+	; ÏÔÊ¾ÄêÐÅÏ¢
+	call ShowBCD	; ÏÔÊ¾BCDÊ®½øÖÆÊý
+	; ÏÔÊ¾¾äµã·Ö¸ô·û
+	;mov al, '.'			; AL = '.'
+	;call ShowChar_dt		; ÏÔÊ¾×Ö·û
+	mov bx,0
+	add bx,date_str
+	mov bp,bx
+	mov cx,1
+	push ax
+	push cx
+	mov ah,3
+	mov bh,0
+	int 10h
+	pop cx
+	pop ax
+	mov dl,1
+	;call DispStr_Chinese		; ÏÔÊ¾×Ö·û´®
+	push ax
+	mov bl,0fh          ;ÁÁ°×É«
+	mov ah,42h
+	int 21h
+	pop ax
+	; »ñÈ¡ÔÂÐÅÏ¢
+	mov al, 8			; ÔÂµÄÆ«ÒÆµØÖ·Îª8
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÔÂÐÅÏ¢
+	; ÏÔÊ¾ÔÂÐÅÏ¢
+	call ShowBCD	; ÏÔÊ¾BCDÊ®½øÖÆÊý
+	; ÏÔÊ¾¾äµã·Ö¸ô·û
+	;mov al, '.'			; AL = '.'
+	;call ShowChar_dt		; ÏÔÊ¾×Ö·û
+	mov bx,2
+	add bx,date_str
+	mov bp,bx
+	mov cx,1
+	push ax
+	push cx
+	mov ah,3
+	mov bh,0
+	int 10h
+	pop cx
+	pop ax
+	mov dl,3
+	;call DispStr_Chinese		; ÏÔÊ¾×Ö·û´®
+	push ax
+	mov bl,0fh          ;ÁÁ°×É«
+	mov ah,42h
+	int 21h
+	pop ax
+	
+	; »ñÈ¡ÈÕÐÅÏ¢
+	mov al, 7			; ÈÕµÄÆ«ÒÆµØÖ·Îª7
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÈÕÐÅÏ¢
+	; ÏÔÊ¾ÈÕÐÅÏ¢
+	call ShowBCD	; ÏÔÊ¾BCDÊ®½øÖÆÊý
+	mov bx,4
+	add bx,date_str
+	mov bp,bx
+	mov cx,1
+	push ax
+	push cx
+	mov ah,3
+	mov bh,0
+	int 10h
+	pop cx
+	pop ax
+	mov dl,5
+	;call DispStr_Chinese		; ÏÔÊ¾×Ö·û´®
+	push ax
+	mov bl,0fh          ;ÁÁ°×É«
+	mov ah,42h
+	int 21h
+	pop ax
+	; ÏÔÊ¾¿Õ¸ñ·Ö¸ô·û
+	mov al, ' '			; AL = ' '
+	call ShowChar_dt		; ÏÔÊ¾×Ö·û
+	
+	; »ñÈ¡ÐÇÆÚÐÅÏ¢
+	mov al, 6			; ÐÇÆÚµÄÆ«ÒÆµØÖ·Îª6
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÐÇÆÚÐÅÏ¢
+	; ÏÔÊ¾ÐÇÆÚÐÅÏ¢
+	dec al			; AL --
+	mov bl, 6			; BL = 3
+	mul bl			; AX = AL * BL
+	add ax, weekstrs_chin	; AX += weekstrs
+	mov bp, ax		; BP = AX Ö¸Ïò¶ÔÓ¦ÐÇÆÚ´®
+	mov cx, 3			; ´®³¤ CX = 3
+	push ax
+	push cx
+	mov ah,3
+	mov bh,0
+	int 10h
+	pop cx
+	pop ax
+	mov dl,7
+	;call DispStr_Chinese		; ÏÔÊ¾×Ö·û´®
+	push ax
+	mov bl,0fh          ;ÁÁ°×É«
+	mov ah,42h
+	int 21h
+	pop ax
+	; ÏÔÊ¾¿Õ¸ñ·Ö¸ô·û
+	mov al, ' '			; AL = ' '
+	call ShowChar_dt		; ÏÔÊ¾×Ö·û
+	
+	; »ñÈ¡Ê±ÐÅÏ¢
+	mov al, 4			; Ê±µÄÆ«ÒÆµØÖ·Îª4
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÊ±ÐÅÏ¢
+	; ÏÔÊ¾Ê±ÐÅÏ¢
+	call ShowBCD	; ÏÔÊ¾BCDÊ®½øÖÆÊý
+	; ÏÔÊ¾Ã°ºÅ·Ö¸ô·û
+	mov al, ':'			; AL = ':'
+	call ShowChar_dt		; ÏÔÊ¾×Ö·û
+
+	; »ñÈ¡·ÖÐÅÏ¢
+	mov al, 2			; ·ÖµÄÆ«ÒÆµØÖ·Îª2
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈë·ÖÐÅÏ¢
+	; ÏÔÊ¾·ÖÐÅÏ¢
+	call ShowBCD	; ÏÔÊ¾BCDÊ®½øÖÆÊý
+	; ÏÔÊ¾Ã°ºÅ·Ö¸ô·û
+	mov al, ':'			; AL = ':'
+	call ShowChar_dt		; ÏÔÊ¾×Ö·û
+
+	; »ñÈ¡ÃëÐÅÏ¢
+	mov al, 0			; ÃëµÄÆ«ÒÆµØÖ·Îª0
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÃëÐÅÏ¢
+	; ÏÔÊ¾ÃëÐÅÏ¢
+	call ShowBCD	; ÏÔÊ¾BCDÊ®½øÖÆÊý
+	; ÉèÖÃ¹â±êÎ»ÖÃ
+	mov ah, 2		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	mov dl, 0		; ÁÐºÅ
+	int 10h			; ÏÔÊ¾ÖÐ¶Ï
+	; ÍË»ØDOS
+	popa	
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©  ;»Ö¸´ÐÐºÅ·½±ãnewlineÊ¹ÓÃ
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	ret
+date_str:
+	db 'Äê'
+	db 'ÔÂ'
+	db 'ÈÕ'
+weekstrs: ; ¶¨ÒåÐÇÆÚ´®Êý×é
+	db 'Sun'
+	db 'Mon'
+	db 'Tue'
+	db 'Wed'
+	db 'Thu'
+	db 'Fri'
+	db 'Sat'
+weekstrs_chin:
+	db 'ÐÇÆÚÈÕ'
+	db 'ÐÇÆÚÒ»'
+	db 'ÐÇÆÚ¶þ'
+	db 'ÐÇÆÚÈý'
+	db 'ÐÇÆÚËÄ'
+	db 'ÐÇÆÚÎå'
+	db 'ÐÇÆÚÁù'
+; -------------------------------------------------------------------
+_dc:
+	pusha
+	; ÉèÖÃ70hÐÂÖÐ¶ÏÏòÁ¿
+	; ¼ÆËã70hºÅÖÐ¶ÏÔÚIVTÖÐµÄÆ«ÒÆ
+	mov bx, 0x70	; BX = 70h£¨ÖÐ¶ÏºÅ£©
+	shl bx, 2		; BX << 2£¨BX *= 4£© 
+	cli				; ¹Ø±ÕÖÐ¶Ï£¬·ÀÖ¹¸Ä¶¯ÆÚ¼ä·¢ÉúÐÂµÄ0x70ºÅÖÐ¶Ï
+	; ÉèÖÃ70hºÅÖÐ¶ÏµÄÐÂÏòÁ¿
+	push es			; ±£´æESÈëÕ»
+	xor ax, ax		; AX = 0
+	mov es, ax		; ES = AX = 0
+	mov word [es:bx], new_int_0x70_dc ; Æ«ÒÆµØÖ·
+	mov word [es:bx + 2], cs ; ¶ÎµØÖ·
+	pop es			; ´ÓÕ»ÖÐ»Ö¸´ES
+
+	; ÉèÖÃRTC×´Ì¬¼Ä´æÆ÷B
+	mov al, 0x0b	; Ö¸¶¨RTC¼Ä´æÆ÷B
+	or al, 0x80		; ×è¶ÏNMI 
+	out 0x70, al	; Ñ¡Ôñ¼Ä´æÆ÷B
+	mov al, 0x12	; ½ûÖ¹ÖÜÆÚÐÔºÍÄÖÖÓÖÐ¶Ï£¬Ö»¿ª·Å¸üÐÂ½áÊøºóÖÐ¶Ï£¬²ÉÓÃBCDÂëºÍ24Ð¡Ê±ÖÆ  00010010
+	out 0x71, al	; ÉèÖÃ¼Ä´æÆ÷B 
+	; ¶ÁÈ¡RTC×´Ì¬¼Ä´æÆ÷C
+	mov al, 0x0c	; Ö¸¶¨RTC¼Ä´æÆ÷C£¬¿ª·ÅNMI
+	out 0x70, al	; Ñ¡Ôñ¼Ä´æÆ÷C
+	in al, 0x71		; ¶ÁRTC¼Ä´æÆ÷C£¬¸´Î»Î´¾öµÄÖÐ¶Ï×´Ì¬
+
+	; ´ò¿ª´Ó8259AµÄIRQ0£¨RTC£©ÖÐ¶Ï
+	in al, 0xa1		; ¶Á´Ó8259AµÄIMR¼Ä´æÆ÷ 
+	and al, 0xfe	; Çå³ýbit0£¨´ËÎ»Á¬½ÓRTC£©
+	out 0xa1, al	; Ð´»Ø´Ë¼Ä´æÆ÷ 
+
+	sti				; ÖØÐÂ¿ª·ÅÖÐ¶Ï 
+	
+	;jmp $			; Èç¹ûÔÚDOSÏÂÔËÐÐ£¬ÐèÓÃ´ËËÀÑ­»·´úÌæÏÂÃæµÄÍË³öDOSÖÐ¶Ï
+
+	; ÍË»ØDOS
+	popa
+	
+	ret
+;--------------------------------------------------------------------
+hex2bcd:  ;al ascii×ªÎªÊ®Áù½øÖÆ   alÎªÆä16½øÖÆÊýÖµ
+	cmp al, 3ah		; AL ÊÇÊý×Ö ?
+	jl .1			; AL < 10£ºÌø×ªµ½.1
+	sub al, 7		; AL >= 10£ºÏÔÊ¾×ÖÄ¸£¨ = ÊýÖµ += 37h£©
+.1: ; Êý×Ö
+	sub al, 30h		; 
+	ret
+; -------------------------------------------------------------------
+ReadMemmory:   ;ÏÔÊ¾ X:X´¦16×Ö½ÚµÄÄÚ´æÐÅÏ¢
+	mov bp,buf
+	add bp,8   ;Ìø¹ýREADMEM   8¸ö×Ö·û
+	mov cx,9
+	push bp
+	;call DispStr
+	pop bp
+	mov si,0
+	mov cx,0   ;½«Ã°ºÅÇ°4¸öasciiÂë×ªÎªÊýÖµ·ÅÈëcx
+.1:  
+	mov ax,0
+	mov al,byte[bp]
+	inc si
+	inc bp
+	call hex2bcd
+	mov ah,al
+	shl ah,4       ;½«×Ö·ûÒÆ¶¯ÖÁ¸ßÎ»
+	shld cx,ax,4   ;Ã¿´ÎÒÆ¶¯ËÄÎ»,8140  8 1 4 0
+	cmp si,4
+	jz .2
+	jmp .1
+.2:
+	mov si,0   ;½«Ã°ºÅºó4¸öasciiÂë×ªÎªÊýÖµ·ÅÈëdx
+	mov dx,0
+	inc bp
+.3:
+	mov ax,0
+	mov al,byte[bp]
+	inc si
+	inc bp
+	call hex2bcd
+	mov ah,al
+	shl ah,4
+	shld dx,ax,4   ;Ã¿´ÎÒÆ¶¯ËÄÎ»,8140  8 1 4 0
+	cmp si,4
+	jz .4
+	jmp .3
+.4:
+	;call space
+	;mov al,ch
+	;call show_hex2ascii
+	;mov al,cl
+	;call show_hex2ascii
+	;call space
+	;mov al,dh
+	;call show_hex2ascii
+	;mov al,dl
+	;call show_hex2ascii
+	;call space
+;-------------------------------------------------------------------1
+;ÏÔÊ¾ CX:DX´¦16×Ö½ÚµÄÄÚ´æÐÅÏ¢
+	pusha
+	push ds
+	push es
+	mov ax,cx
+	mov ds,ax
+	mov si,dx
+	mov di,0
+	cld
+.11:
+	lodsb
+	;mov al,0fah
+	call show_hex2ascii
+	inc di
+	cmp di,15
+	jz ReadMemmory_Out
+	call space
+	jmp .11
+ReadMemmory_Out:
+	pop es
+	pop ds
+	popa
+	; ¶ÁÈ¡¹â±êÎ»ÖÃ
+	mov ah, 3		; ¹¦ÄÜºÅ
+	int 10h
+	; ÉèÖÃ¹â±êÎ»ÖÃ
+	mov ah, 2		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h			; ÏÔÊ¾ÖÐ¶Ï
+	add sp,2
+	jmp again	
+; -------------------------------------------------------------------
+ShowChar_dt: ; ÏÔÊ¾µ¥¸ö×Ö·û£¨ÒÔALÎª´«µÝ²ÎÊý£©
+	mov ah, 0Eh		; ¹¦ÄÜºÅ£¨ÒÔµç´«·½Ê½ÏÔÊ¾µ¥¸ö×Ö·û£©
+	mov bl, 0fh 		; ÁÁ°××Ö
+	int 10h 			; µ÷ÓÃ10HºÅÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+;-------------------------------------------------------------------------------
+show_hex2ascii:  ;ÏÔÊ¾16½øÖÆ×ªASCII£¨ÊäÈë£ºAL = BCDÂë£¬Êä³ö£ºAX = ASCII£©
+	pusha
+	mov dx,ax
+	mov dh,dl
+	push dx
+	;------»ñÈ¡¸ßËÄÎ»---------;
+	mov bx,0
+	;shld bx,dx,4
+	mov bx,dx
+	shr bx,4
+	and bl,0fh
+	mov al,bl
+	call ShowChar
+	;------»ñÈ¡µÍËÄÎ»---------;
+	mov bx,0
+	mov bx,dx
+	and bl,0fh
+	mov al,bl
+	call ShowChar
+	
+	pop dx
+	popa
+	ret
+;-------------------------------------------------------------------------------
+bcd2ascii: ;BCDÂë×ªASCII£¨ÊäÈë£ºAL = BCDÂë£¬Êä³ö£ºAX = ASCII£©
+	mov ah, al		; AH = AL£¨·Ö²ð³ÉÁ½¸öÊý×Ö£©
+	and al, 0x0f	; AL & 0Fh£¨È¡BCDµÄµÍ4Î»Êý¾Ý£©
+	add al, 0x30	; AL += 30h£¨×ª»»³ÉASCII£©
+	shr ah, 4		; AH >> 4£¨È¡BCDµÄ¸ß4Î»Êý¾Ý£©
+	add ah, 0x30	; AH += 30h£¨×ª»»³ÉASCII£©
+	ret				; ´ÓÀý³Ì·µ»Ø
+; -------------------------------------------------------------------	
+ShowBCD: ; ÏÔÊ¾µ¥×Ö½ÚBCDÊ®½øÖÆÊý£¨ÒÔALÎª´«µÝ²ÎÊý£©
+	push ax			; ±£´æAL½øÕ»
+	shr al, 4			; AL >> 4 £¨¸ßÎ»Êý×Ö£©
+	add al, 30h		; Êý×Ö×Ö·û = ÊýÖµ+=30h
+	call ShowChar_dt		; ÏÔÊ¾×Ö·û
+	pop ax			; ´ÓÕ»ÖÐ»Ö¸´AL
+	and al, 0Fh		; È¡ALµÄµÍ4Î»
+	add al, 30h		; Êý×Ö×Ö·û = ÊýÖµ+=30h
+	call ShowChar_dt		; ÏÔÊ¾×Ö·û
+	ret				; ´ÓÀý³Ì·µ»Ø
+; -------------------------------------------------------------------
+ver: ; ÏÔÊ¾°æÈ¨ÐÅÏ¢
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾°æÈ¨×Ö·û´® 'MyOS 1.x  (C) 2016 CANNON OS'
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str1 	; BP=´®µØÖ·
+	mov cx, str1len	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+
+; -------------------------------------------------------------------
+DispStr_HZK: ; ÏÔÊ¾×Ö·û´®
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+
+; -------------------------------------------------------------------
+ver0: ; ÏÔÊ¾°æÈ¨ÐÅÏ¢
+	pusha
+	push dx
+	mov dh,0
+	; ÏÔÊ¾°æÈ¨×Ö·û´® 'MyOS 1.x  (C) 2016 CANNON OS'
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str1 	; BP=´®µØÖ·
+	mov cx, str1len	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	pop dx
+	
+	mov ah,02h
+	mov bh,0
+	int 10h
+	popa
+	ret				; ´ÓÀý³Ì·µ»Ø
+; -------------------------------------------------------------------
+cls: ; ÇåÆÁ
+	mov	ah, 6		; ¹¦ÄÜºÅ
+	mov	al, 0		; ¹ö¶¯µÄÎÄ±¾ÐÐÊý£¨0=Õû¸ö´°¿Ú£©
+	mov bh, 00h		; ÉèÖÃ²åÈë¿ÕÐÐµÄ×Ö·ûÑÕÉ«ÎªºÚµ×ÁÁ°××Ö
+	mov cx, 0		; ´°¿Ú×óÉÏ½ÇµÄÐÐºÅ=CH¡¢ÁÐºÅ=CL
+	mov dh, 30		; ´°¿ÚÓÒÏÂ½ÇµÄÐÐºÅ
+	mov dl, 79		; ´°¿ÚÓÒÏÂ½ÇµÄÁÐºÅ
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÉèÖÃ¹â±êÎ»ÖÃ
+	mov ah, 2		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	mov dh, 0		; ÐÐºÅ
+	mov dl, 0		; ÁÐºÅ
+	int 10h			; ÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
+	
+; -------------------------------------------------------------------
+diskok: ; ÅÐ¶ÏÇÐ»»µ½µÄÄ¿±ê´ÅÅÌÊÇ·ñ´æÔÚ£¨ÊäÈë²ÎÊýÎªDL=´ÅÅÌµÄÇý¶¯Æ÷ºÅ£©
+	; ÀûÓÃ´ÅÅÌµÄ0ºÅÖÐ¶ÏÅÐ¶Ï´ÅÅÌÊÇ·ñ´æÔÚ
+	mov ah, 0		; ¹¦ÄÜºÅ=0£º´ÅÅÌ¸´Î»£¨³ö´íÖÃCF±êÖ¾Î»£©
+	int 13h			; µ÷ÓÃ13HºÅ´ÅÅÌÖÐ¶Ï
+	jc .1			; CF=1 ´ÅÅÌ²»´æÔÚ£¬ÇÐ»»´ÅÅÌÊ§°Ü
+	; ´ÅÅÌ´æÔÚÊ±£¬·µ»ØÇÐ»»´ÅÅÌÀý³Ì
+	ret				; ´ÓÀý³Ì·µ»Ø
+	
+.1: ; ´ÅÅÌ²»´æÔÚÊ±£¬ÏÔÊ¾³ö´íÐÅÏ¢ºó£¬ÍË³öÑ­»·£¬ÖØÐÂ¿ªÊ¼
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾´ÅÅÌ²»´æÔÚµÄÐÅÏ¢ "Disk not exist!"
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str5 	; BP=´®µØÖ·
+	mov cx, str5len	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÍË³öÑ­»·£¬ÖØÐÂ¿ªÊ¼
+	add sp, 4		; µ¯³öÁ½´ÎcallµÄ·µ»ØµØÖ·
+	jmp again		; ÖØÐÂ¿ªÊ¼
+	
+str5: ; ×Ö·û´®5£¨´ÅÅÌ²»´æÔÚÐÅÏ¢´®£©
+	db 'Disk not exist!'
+str5len equ $ - str5 ; ´ÅÅÌ²»´æÔÚ´®³¤
+; -------------------------------------------------------------------
+toa: ; ¸ÄÎªAÅÌ
+	mov dl, 0		; ÈíÅÌAµÄÇý¶¯Æ÷ºÅ=0
+	call diskok		; Èç¹û´ÅÅÌ²»´æÔÚ£¬¾Í²»ÇÐ»»´ÅÅÌ£¬·ñÔò¼ÌÐø£º
+	mov byte [str2], 'A' ; ÐÞ¸ÄÌáÊ¾´®Ê××ÖÄ¸ÎªA
+	mov byte [drvno], 0 ; ÉèÖÃÇý¶¯Æ÷ºÅÎª0
+	call getdiskparam	; »ñÈ¡´ÅÅÌ²ÎÊýH&S£¨ÓÃÓÚReadSecºÍlsÀý³Ì£©
+	add sp, 2		; µ¯³öcallµÄ·µ»ØµØÖ·
+
+	;ÐÞ¸ÄÄ¿Â¼ÌáÊ¾´®
+	mov di,str2
+	add di,3
+	mov al,'$'
+	stosb
+	mov byte[str2len],4
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	inc dh
+	; ÉèÖÃ¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+
+    call initialDisk
+	
+	jmp again		; ÖØÐÂ¿ªÊ¼
+	
+; -------------------------------------------------------------------
+tob: ; ¸ÄÎªBÅÌ
+	mov dl, 1		; ÈíÅÌBµÄÇý¶¯Æ÷ºÅ=1
+	call diskok		; Èç¹û´ÅÅÌ²»´æÔÚ£¬¾Í²»ÇÐ»»´ÅÅÌ£¬·ñÔò¼ÌÐø£º
+	mov byte [str2], 'B' ; ÐÞ¸ÄÌáÊ¾´®Ê××ÖÄ¸ÎªB
+	mov byte [drvno], 1 ; ÉèÖÃÇý¶¯Æ÷ºÅÎª1
+	call getdiskparam	; »ñÈ¡´ÅÅÌ²ÎÊýH&S£¨ÓÃÓÚReadSecºÍlsÀý³Ì£©
+	add sp, 2		; µ¯³öcallµÄ·µ»ØµØÖ·
+	;ÐÞ¸ÄÄ¿Â¼ÌáÊ¾´®
+	mov di,str2
+	add di,3
+	mov al,'$'
+	stosb
+	mov byte[str2len],4
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	inc dh
+	; ÉèÖÃ¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	
+	call initialDisk
+	
+	jmp again		; ÖØÐÂ¿ªÊ¼
+
+; -------------------------------------------------------------------
+toc: ; ¸ÄÎªCÅÌ
+	mov dl, 80h		; Ó²ÅÌCµÄÇý¶¯Æ÷ºÅ=80h
+	call diskok		; Èç¹û´ÅÅÌ²»´æÔÚ£¬¾Í²»ÇÐ»»´ÅÅÌ£¬·ñÔò¼ÌÐø£º
+	mov byte [str2], 'C' ; ÐÞ¸ÄÌáÊ¾´®Ê××ÖÄ¸ÎªC
+	mov byte [drvno], 80h ; ÉèÖÃÇý¶¯Æ÷ºÅÎª80h
+	call getdiskparam	; »ñÈ¡´ÅÅÌ²ÎÊýH&S£¨ÓÃÓÚReadSecºÍlsÀý³Ì£©
+	add sp, 2		; µ¯³öcallµÄ·µ»ØµØÖ·
+	;ÐÞ¸ÄÄ¿Â¼ÌáÊ¾´®
+	mov di,str2
+	add di,3
+	mov al,'$'
+	stosb
+	mov byte[str2len],4
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	inc dh
+	; ÉèÖÃ¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	
+	call initialDisk
+	
+	jmp again		; ÖØÐÂ¿ªÊ¼
+
+;---------------------------------------------------------------------
+initialDisk:;        ;³õÊ¼»¯lsÓÃµ½µÄ²ÎÊý
+	pusha
+	call ReadPBootSec
+	; nsecÎª¸ùÄ¿Â¼ÇøÊ£ÓàÉÈÇøÊý£¬³õÊ¼»¯Îª¸ùÄ¿Â¼ÉÈÇøÊý£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+	; ¼ÆËã¸ùÄ¿Â¼ÉÈÇøÊý£¨ = ×î´ó¸ùÄ¿Â¼ÏîÊý / 32£©
+	mov ax, [Sector + 11h]	; AX = ×î´ó¸ùÄ¿Â¼ÏîÊý
+	shr ax, 4				; AXÓÒÒÆ4Î»£¨~ /32£© = ¸ùÄ¿Â¼ÉÈÇøÊý
+	mov word [nsec], ax		; nsec = AX = ¸ùÄ¿Â¼ÉÈÇøÊý
+
+	; isecÎªµ±Ç°ÉÈÇøºÅ£¬¸³³õÖµÎª¸ùÄ¿Â¼ÇøµÄÊ×ÉÈÇøºÅ£¬ÔÚÑ­»·ÖÐ»áÖð¸öÔö¼Ó
+	; ¼ÆËã¸ùÄ¿Â¼Ê×ÉÈÇøºÅ£¨= ±£ÁôÉÈÇøÊý + FATÊý * FATÕ¼ÉÈÇøÊý£©
+	movzx ax, byte [Sector + 10h] ; AX = FATÊý
+	mul word [Sector + 16h]	; AX *= FATÕ¼ÉÈÇøÊý
+	add ax, [Sector + 0Eh]	; AX += ±£ÁôÉÈÇøÊý
+	mov [isec],ax			; isec = AX = ¸ùÄ¿Â¼Ê×ÉÈÇøºÅ
+	popa
+	ret
+;--------------------------------------------------------------------
+dir: ; ÏÔÊ¾¸ùÄ¿Â¼ÎÄ¼þ
+	call showbpb	; ÏÔÊ¾´ÅÅÌÐÅÏ¢
+	call ls			; ÏÔÊ¾´ÅÅÌÎÄ¼þÐÅÏ¢ÁÐ±í
+	ret				; ´ÓÀý³Ì·µ»Ø
+;--------------------------------------------------------------------
+; ¶¨Òå±äÁ¿£¨´ÅÅÌ²ÎÊý£©
+CurrentDirSectors	dw	14		; µ±Ç°Ä¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+SectorNoOfCurrentDirectory	dw	19	; µ±Ç°Ä¿Â¼ÇøµÄÊ×ÉÈÇøºÅ
+SectorNoOfLastDirectory	dw	19	; ÉÏÒ»Ä¿Â¼ÇøµÄÊ×ÉÈÇøºÅ
+iCurrentDirSectors  dw 0       ;´ý¼ÆËãµÄÏÂÒ»Ä¿Â¼ËùÕ¼ÉÈÇøÊý
+Dir_len dw 0					;ÒªcdµÄÄ¿Â¼³¤¶È
+isBackBool dw 0					;ÊÇ·ñÊÇÌø»ØÉÏÒ»¼¶..=2 »òÕß Í¬¼¶.=1
+NumOfSign dw 0					;Ä¿Â¼·Ö¸ô·ûµÄ¸öÊý
+cdToDir:   ;ÌøÖÁ×ÓÄ¿Â¼    X:/$×ÓÄ¿Â¼            ´óÖÂµÄË¼Â·ÊÇ:ÔÚµ±Ç°ÉÈÇøÕÒ×ÓÄ¿Â¼ÌõÄ¿£¬ÕÒµ½Ôò¼ÌÐø²é¿´ÌõÄ¿ÖÐÉÈÇøºÅ£¬ÔÙÈ¥ÕÒ£Æ£Á£Ô±í¼ÆËã³öÏÂÒ»¼¶Ä¿Â¼µÄ´óÐ¡£¬ÐÞ¸Äµ±Ç°ÉÈÇø±äÁ¿SectorNoOfCurrentDirectory¡¡ÒÔ¼°CurrentDirSectors
+	push ax
+	mov ax,[SectorNoOfCurrentDirectory]      ;±£´æ¼ÆËãÏÂÒ»ÉÈÇøÇ°µÄÉÈÇøºÅ
+	mov [SectorNoOfLastDirectory],ax
+	pop ax
+	pusha
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äDirbuf
+	mov cx, 11	; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøbufµÄ³¤¶È£¨buflen=80£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, Dirbuf		; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	
+	mov cx,buflen
+	mov bp,buf
+	add bp,3   ;Ìø¹ýcd  Èý¸ö×Ö·û
+	cmp byte[bp],'\'
+	jz backToRoot
+	push bp    ;±£´æbp
+	mov si,0
+.1:  
+	cmp byte[bp],20h
+	jz .2
+	cmp byte[bp],0
+	jz .2
+	inc si
+	inc bp
+	jmp .1
+.2:
 	pop bp
 	cmp si,11
 	jg dir_out
+	cmp si,0
+	jz cd_error
 	mov [Dir_len],si
 	mov di,Dirbuf
 	cld
@@ -895,134 +2057,210 @@ cdToDir:   ;è·³è‡³å­ç›®å½•    X:/$å­ç›®å½•
 	popa
 	
 	call tocap_Dirbuf
-	mov bp,Dirbuf
+	mov bp,Dirbuf      ;»ñµÃÒªÌø×ªÄ¿Â¼µÄÄ¿Â¼Ãû
 	mov cx,11
-	call DispStr
+	;call DispStr
+	;ÅÐ¶ÏÊÇ·ñÎª. »òÕß ..
+	mov bp,Dirbuf
+	mov si,0
+.isBack:
+	cmp byte[bp],'.'
+	jnz .isBackEnds    ;²»ÊÇµãÍË³öÀ´
+	inc si
+	inc bp
+	jmp .isBack
+.isBackEnds:
+	;cmp si,2           ;Ò»¸öÊÇÍ¬¼¶Ä¿Â¼£¬Á½¸ö·µ»ØÉÏÒ»¼¶
+	mov [isBackBool],si ;±£´æÅÐ¶Ï½á¹û£¬ÐÞ¸ÄÌáÊ¾´®Ê±ÓÃµ½
+	cmp word[isBackBool],1   ;Ò»¸öµã»¹ÊÇÍ¬Ò»¼¶Ä¿Â¼£¬ÎÞÐè¸Ä±äÄ¿Â¼ÌáÊ¾´®
+	jz cd_ends
+	cmp word[isBackBool],2  ; Á½¸öµã´ú±íÉÏÒ»¼¶Ä¿Â¼
+	jnz .cd_start
+	pusha               ;ÉèÖÃÐÂµÄÄ¿Â¼ ÌáÊ¾´®
+	mov ax,ds
+	mov es,ax
+	mov si,[Dir_len]
+	mov di,str2
+	;add di,[str2len]
+	dec di      ;¼õÈ¥$·ûºÅ
+	;¼ÆËã/µÄ¸öÊý£¬ÒÔÅÐ¶ÏÊÇ·ñÎªÒ»¼¶Ä¿Â¼
+	mov cx,[str2len]
+	mov word [NumOfSign],0     ;³õÊ¼»¯¼ÆÊýÆ÷
+.11
+	cmp byte[di],'/'
+	jnz .11.1
+	inc word[NumOfSign]
+.11.1:
+	inc di
+	loop .11
+	popa                       ;ÏÈpop³öÀ´ºÃ½øÐÐÅÐ¶ÏÌø×ª
+	push ax
+	mov ax,ds
+	mov es,ax
+	pop ax
+	cmp word [NumOfSign],2     ;´ú±íÉÏÒ»¼¶ÒÑ¾­ÊÇ¸ùÄ¿Â¼
+	jz backToRoot
+.cd_start:
 ;-------------------------------------------------------------------1
-	push es		; ä¿æŠ¤ES
+	push es		; ±£»¤ES
 
-; è½¯é©±å¤ä½
-	xor	ah, ah	; åŠŸèƒ½å·ah=0ï¼ˆå¤ä½ç£ç›˜é©±åŠ¨å™¨ï¼‰
-	xor	dl, dl	; dl=0ï¼ˆè½¯é©±Aï¼Œè½¯é©±Bä¸º1ã€ç¡¬ç›˜å’ŒUç›˜ä¸º80hï¼‰
-	int	13h		; ç£ç›˜ä¸­æ–­
+; ÈíÇý¸´Î»
+	xor	ah, ah	; ¹¦ÄÜºÅah=0£¨¸´Î»´ÅÅÌÇý¶¯Æ÷£©
+	xor	dl, dl	; dl=0£¨ÈíÇýA£¬ÈíÇýBÎª1¡¢Ó²ÅÌºÍUÅÌÎª80h£©
+	int	13h		; ´ÅÅÌÖÐ¶Ï
 	
-; ä¸‹é¢åœ¨å½“å‰ç›®å½•ä¸­å¯»æ‰¾å­ç›®å½•
+; ÏÂÃæÔÚµ±Ç°Ä¿Â¼ÖÐÑ°ÕÒ×ÓÄ¿Â¼
 	mov ax,[SectorNoOfCurrentDirectory]
-	mov	word [wSectorNo], ax 	; ç»™è¡¨ç¤ºå½“å‰æ‰‡åŒºå·çš„
-						; å˜é‡wSectorNoèµ‹åˆå€¼ä¸ºæ ¹ç›®å½•åŒºçš„é¦–æ‰‡åŒºå·ï¼ˆ=19ï¼‰
+	;cmp ax,SectorNoOfRootDirectory
+	;jz .1.1
+	;add ax,1fh
+;.1.1
+	mov	word [wSectorNo], ax 	; ¸ø±íÊ¾µ±Ç°ÉÈÇøºÅµÄ
+						; ±äÁ¿wSectorNo¸³³õÖµÎª¸ùÄ¿Â¼ÇøµÄÊ×ÉÈÇøºÅ£¨=19£©
 	mov ax,[CurrentDirSectors]
-	mov word [wRootDirSizeForLoop], ax	; æ ¹ç›®å½•åŒºå‰©ä½™æ‰‡åŒºæ•°
-										; åˆå§‹åŒ–ä¸º14ï¼Œåœ¨å¾ªçŽ¯ä¸­ä¼šé€’å‡è‡³é›¶
+	mov word [wRootDirSizeForLoop], ax	; ¸ùÄ¿Â¼ÇøÊ£ÓàÉÈÇøÊý
+										; ³õÊ¼»¯Îª14£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
 LABEL_SEARCH_IN_Current_DIR_BEGIN:
-	cmp	word [wRootDirSizeForLoop], 0 ; åˆ¤æ–­æ ¹ç›®å½•åŒºæ˜¯å¦å·²è¯»å®Œ
-	jz	VOL_NOT_FOUND	; è‹¥è¯»å®Œåˆ™è¡¨ç¤ºæœªæ‰¾åˆ°ç›®å½•é¡¹
-	dec	word [wRootDirSizeForLoop]	; é€’å‡å˜é‡wRootDirSizeForLoopçš„å€¼
-	; è°ƒç”¨è¯»æ‰‡åŒºå‡½æ•°è¯»å…¥ä¸€ä¸ªæ ¹ç›®å½•æ‰‡åŒºåˆ°è£…è½½åŒº
+	cmp	word [wRootDirSizeForLoop], 0 ; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	VOL_NOT_FOUND	; Èô¶ÁÍêÔò±íÊ¾Î´ÕÒµ½Ä¿Â¼Ïî
+	dec	word [wRootDirSizeForLoop]	; µÝ¼õ±äÁ¿wRootDirSizeForLoopµÄÖµ
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸ö¸ùÄ¿Â¼ÉÈÇøµ½×°ÔØÇø
 	mov	ax, BaseOfLoader
-	mov	es, ax			; ES <- BaseOfLoaderï¼ˆ4000hï¼‰
-	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoaderï¼ˆ100hï¼‰
-	mov	ax, [wSectorNo]	; AX <- æ ¹ç›®å½•ä¸­çš„å½“å‰æ‰‡åŒºå·
-	mov	cl, 1			; åªè¯»ä¸€ä¸ªæ‰‡åŒº
-	call ReadSec		; è°ƒç”¨è¯»æ‰‡åŒºå‡½æ•°
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
 
-	mov	si, Dirbuf		; DS:SI -> ç›®å½•é¡¹
+	mov	si, Dirbuf		; DS:SI -> Ä¿Â¼Ïî
 	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
-	cld					; æ¸…é™¤DFæ ‡å¿—ä½
-						; ç½®æ¯”è¾ƒå­—ç¬¦ä¸²æ—¶çš„æ–¹å‘ä¸ºå·¦/ä¸Š[ç´¢å¼•å¢žåŠ ]
-	mov	dx, 10h			; å¾ªçŽ¯æ¬¡æ•°=16ï¼ˆæ¯ä¸ªæ‰‡åŒºæœ‰16ä¸ªæ–‡ä»¶æ¡ç›®ï¼š512/32=16ï¼‰
+	cld					; Çå³ýDF±êÖ¾Î»
+						; ÖÃ±È½Ï×Ö·û´®Ê±µÄ·½ÏòÎª×ó/ÉÏ[Ë÷ÒýÔö¼Ó]
+	mov	dx, 10h			; Ñ­»·´ÎÊý=16£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
 VOL_SEARCH_FOR_VOL_FILE:
-	cmp	dx, 0			; å¾ªçŽ¯æ¬¡æ•°æŽ§åˆ¶
-	jz LABEL_GOTO_NEXT_SECTOR_IN_Current_DIR ; è‹¥å·²è¯»å®Œä¸€æ‰‡åŒº
-	dec	dx				; é€’å‡å¾ªçŽ¯æ¬¡æ•°å€¼			  å°±è·³åˆ°ä¸‹ä¸€æ‰‡åŒº
-	mov	cx,[Dir_len] 	; åˆå§‹å¾ªçŽ¯æ¬¡æ•°ä¸º11
+	cmp	dx, 0			; Ñ­»·´ÎÊý¿ØÖÆ
+	jz LABEL_GOTO_NEXT_SECTOR_IN_Current_DIR ; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø
+	dec	dx				; µÝ¼õÑ­»·´ÎÊýÖµ			  ¾ÍÌøµ½ÏÂÒ»ÉÈÇø
+	mov	cx,11 	; ³õÊ¼Ñ­»·´ÎÊýÎª11
 VOL_CMP_FILENAME:
-	repe cmpsb			; é‡å¤æ¯”è¾ƒå­—ç¬¦ä¸²ä¸­çš„å­—ç¬¦ï¼ŒCX--ï¼Œç›´åˆ°ä¸ç›¸ç­‰æˆ–CX=0
+	repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
 	cmp	cx, 0
-	jz	LABEL_VOL_FOUND ; å¦‚æžœæ¯”è¾ƒäº†11ä¸ªå­—ç¬¦éƒ½ç›¸ç­‰ï¼Œè¡¨ç¤ºæ‰¾åˆ°
+	jz	LABEL_VOL_FOUND ; Èç¹û±È½ÏÁË11¸ö×Ö·û¶¼ÏàµÈ£¬±íÊ¾ÕÒµ½
 VOL_DIFFERENT:
-	and	di, 0FFE0h		; DI &= E0ä¸ºäº†è®©å®ƒæŒ‡å‘æœ¬æ¡ç›®å¼€å¤´ï¼ˆä½Ž5ä½æ¸…é›¶ï¼‰
-						; FFE0h = 1111111111100000ï¼ˆä½Ž5ä½=32=ç›®å½•æ¡ç›®å¤§å°ï¼‰
-	add	di, 20h			; DI += 20h ä¸‹ä¸€ä¸ªç›®å½•æ¡ç›®
-	mov	si, Dirbuf		; SIæŒ‡å‘è£…è½½æ–‡ä»¶åä¸²çš„èµ·å§‹åœ°å€
-	jmp	VOL_SEARCH_FOR_VOL_FILE; è½¬åˆ°å¾ªçŽ¯å¼€å§‹å¤„
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+						; FFE0h = 1111111111100000£¨µÍ5Î»=32=Ä¿Â¼ÌõÄ¿´óÐ¡£©
+	add	di, 20h			; DI += 20h ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	mov	si, Dirbuf		; SIÖ¸Ïò×°ÔØÎÄ¼þÃû´®µÄÆðÊ¼µØÖ·
+	jmp	VOL_SEARCH_FOR_VOL_FILE; ×ªµ½Ñ­»·¿ªÊ¼´¦
 
-LABEL_GOTO_NEXT_SECTOR_IN_Current_DIR:
-	add	word [wSectorNo], 1 ; é€’å¢žå½“å‰æ‰‡åŒºå·
+LABEL_GOTO_NEXT_SECTOR_IN_Current_DIR: ;¶ÔÓÚ×ÓÄ¿Â¼LABEL_GOTO_NEXT_SECTOR_IN_Current_DIRÒª×Ô¼ºËã³öÀ´(Ö±½ÓÊ¹ÓÃtoDirÖÐµÄËã·¨)  Óë¸ùÄ¿Â¼Ëã·¨²»Í¬
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
+	pusha
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[wSectorNo]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	exit_cd ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [wSectorNo],ax
+	add	word [wSectorNo],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	LABEL_SEARCH_IN_Current_DIR_BEGIN		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc	word [wSectorNo]	; ¶ÔÓÚ¸ùÄ¿Â¼£¬µÝÔöµ±Ç°ÉÈÇøºÅ
 	jmp	LABEL_SEARCH_IN_Current_DIR_BEGIN
-
-VOL_NOT_FOUND:
-	pop es			; æ¢å¤ES
-	call showError1	; æ˜¾ç¤ºå­—ç¬¦ä¸²
+exit_cd:			;Ã»ÓÐ×ÓÄ¿Â¼µ¼ÖÂ Ìø×ªÊ§°ÜÖ±½ÓÍË³ö
+	pop es			; »Ö¸´ES
+	call showError1	; ÏÔÊ¾×Ö·û´®
+	jmp cd_ends
+VOL_NOT_FOUND:     
+	pop es			; »Ö¸´ES
+	call showError1	; ÏÔÊ¾×Ö·û´®
 	jmp dir_out
 ;------------------------------------------------------+
 LABEL_VOL_FOUND:           ;aaa
-	
-	; è®¡ç®—æ–‡ä»¶çš„èµ·å§‹æ‰‡åŒºå·
-	mov	ax, [CurrentDirSectors]	; AX=å½“å‰ç›®å½•å ç”¨çš„æ‰‡åŒºæ•°
-	and	di, 0FFE0h		; DI -> å½“å‰æ¡ç›®çš„å¼€å§‹åœ°å€
-	add	di, 1Ah			; DI -> å­ç›®å½•çš„é¦–æ‰‡åŒºå·åœ¨æ¡ç›®ä¸­çš„åç§»åœ°å€
-	mov cx, word [es:di] ; CX=å­ç›®å½•çš„é¦–æ‰‡åŒºå·
-	;mov word[SectorNoOfCurrentDirectory],cx ;ä¿®æ”¹å½“å‰ç›®å½•çš„é¦–æ‰‡åŒºå·
+	mov word [iCurrentDirSectors],0  ;Õ¼ÓÃÉÈÇøÊý ¼ÆÊýÆ÷ÇåÁã
+	; ¼ÆËãÎÄ¼þµÄÆðÊ¼ÉÈÇøºÅ
+	mov	ax, [CurrentDirSectors]	; AX=µ±Ç°Ä¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+	and	di, 0FFE0h		; DI -> µ±Ç°ÌõÄ¿µÄ¿ªÊ¼µØÖ·
+	add	di, 1Ah			; DI -> ×ÓÄ¿Â¼µÄÊ×ÉÈÇøºÅÔÚÌõÄ¿ÖÐµÄÆ«ÒÆµØÖ·
+	mov cx, word [es:di] ; CX=×ÓÄ¿Â¼µÄÊ×ÉÈÇøºÅ
+	mov word[SectorNoOfCurrentDirectory],cx ;ÐÞ¸Äµ±Ç°Ä¿Â¼µÄÊ×ÉÈÇøºÅ
 	pop es
 	
 	
 	mov word [nsec],1
 	mov word [isec],cx
 	add word [isec],1fh
-	jmp VOL_FILE_LOADED
+	;jmp VOL_FILE_LOADED
 	pusha
-	push cx				; ä¿å­˜æ­¤æ‰‡åŒºåœ¨FATä¸­çš„åºå·
-	add	cx, ax			; CX=æ–‡ä»¶çš„ç›¸å¯¹èµ·å§‹æ‰‡åŒºå·+å½“å‰ç›®å½•å ç”¨çš„æ‰‡åŒºæ•°
-	add	cx, DeltaSectorNo ; CL <- ç›®å½•é¡¹çš„èµ·å§‹æ‰‡åŒºå·(0-based)
+	push cx				; ±£´æ´ËÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	add	cx, ax			; CX=ÎÄ¼þµÄÏà¶ÔÆðÊ¼ÉÈÇøºÅ+µ±Ç°Ä¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+	add	cx, DeltaSectorNo ; CL <- Ä¿Â¼ÏîµÄÆðÊ¼ÉÈÇøºÅ(0-based)
 	mov	ax, BaseOfLoader
-	mov	es, ax			; ES <- BaseOfLoaderï¼ˆCOMç¨‹åºåŸºå€=4000hï¼‰
-	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoaderï¼ˆCOMç¨‹åºåç§»åœ°å€=100hï¼‰
-	mov	ax, cx			; AX <- èµ·å§‹æ‰‡åŒºå·	
-VOL_GOON_SETTING_PARAM: ;è®¾ç½®å½“å‰ç›®å½•çš„æ‰‡åŒºæ•°å’Œé¦–æ‰‡åŒºå·
-	push bx				; ä¿å­˜COMç¨‹åºåç§»åœ°å€
-	mov	cl, 1			; 1ä¸ªæ‰‡åŒº
-	call ReadSec		; è¯»æ‰‡åŒº
+	mov	es, ax			; ES <- BaseOfLoader£¨COM³ÌÐò»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨COM³ÌÐòÆ«ÒÆµØÖ·=100h£©
+	mov	ax, cx			; AX <- ÆðÊ¼ÉÈÇøºÅ	
+VOL_GOON_SETTING_PARAM: ;ÉèÖÃµ±Ç°Ä¿Â¼µÄÉÈÇøÊýºÍÊ×ÉÈÇøºÅ
+	push bx				; ±£´æCOM³ÌÐòÆ«ÒÆµØÖ·
+	mov	cl, 1			; 1¸öÉÈÇø
+	call ReadSec		; ¶ÁÉÈÇø
 	inc word [iCurrentDirSectors]
-	; è®¡ç®—å­ç›®å½•æ‰€å çš„æ‰‡åŒºæ•°
-	pop bx				; å–å‡ºç›®å½•åç§»åœ°å€
-	pop	ax				; å–å‡ºæ­¤æ‰‡åŒºåœ¨FATä¸­çš„åºå·
-	call GetFATEntry	; èŽ·å–FATé¡¹ä¸­çš„ä¸‹ä¸€ç°‡å·
-	cmp	ax, 0FF8h		; æ˜¯å¦æ˜¯ç›®å½•çš„æœ€åŽç°‡
-	jae	VOL_FILE_LOADED ; â‰¥FF8hæ—¶è·³è½¬ï¼Œå¦åˆ™è¯»ä¸‹ä¸€ä¸ªç°‡
-	push ax				; ä¿å­˜æ‰‡åŒºåœ¨FATä¸­çš„åºå·
-	mov	dx, [CurrentDirSectors] ; DX = å½“å‰ç›®å½•æ‰‡åŒºæ•°
-	add	ax, dx			; æ‰‡åŒºåºå· + å½“å‰ç›®å½•æ‰‡åŒºæ•°
-	add	ax, DeltaSectorNo ; AX = è¦è¯»çš„æ•°æ®æ‰‡åŒºåœ°å€
-	add	bx, [BPB_BytsPerSec] ; BX+512æŒ‡å‘å­ç›®å½•æ¡ç›®åŒºçš„ä¸‹ä¸€ä¸ªæ‰‡åŒºåœ°å€
+	; ¼ÆËã×ÓÄ¿Â¼ËùÕ¼µÄÉÈÇøÊý
+	pop bx				; È¡³öÄ¿Â¼Æ«ÒÆµØÖ·
+	pop	ax				; È¡³ö´ËÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	cmp	ax, 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	VOL_FILE_LOADED ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	push ax				; ±£´æÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	mov	dx, [CurrentDirSectors] ; DX = µ±Ç°Ä¿Â¼ÉÈÇøÊý
+	add	ax, dx			; ÉÈÇøÐòºÅ + µ±Ç°Ä¿Â¼ÉÈÇøÊý
+	add	ax, DeltaSectorNo ; AX = Òª¶ÁµÄÊý¾ÝÉÈÇøµØÖ·
+	add	bx, [BPB_BytsPerSec] ; BX+512Ö¸Ïò×ÓÄ¿Â¼ÌõÄ¿ÇøµÄÏÂÒ»¸öÉÈÇøµØÖ·
 	
 	jmp VOL_GOON_SETTING_PARAM
 VOL_FILE_LOADED:
-	jmp nextdir
+	;jmp nextdir
 	mov ax,[iCurrentDirSectors]
     mov word [CurrentDirSectors],ax
 	push cx
 	mov cx,[iCurrentDirSectors]
 	pusha
-	; æ˜¾ç¤ºé«˜4ä½
-	mov al, cl		; AL=IDé«˜ä½å­—èŠ‚
-	and al, 0F0h	; å–å‡ºé«˜4ä½
+	; ÏÔÊ¾¸ß4Î»
+	mov al, cl		; AL=ID¸ßÎ»×Ö½Ú
+	and al, 0F0h	; È¡³ö¸ß4Î»
 	shr al, 4		; AL >> 4
-	call ShowChar	; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦å‡½æ•°
-	; æ˜¾ç¤ºä½Ž4ä½
-	mov al, cl		; AL=IDé«˜ä½å­—èŠ‚
-	and al, 0Fh		; å–å‡ºä½Ž4ä½
-	call ShowChar	; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦å‡½æ•°
+	;call ShowChar	; µ÷ÓÃÏÔÊ¾×Ö·ûº¯Êý
+	; ÏÔÊ¾µÍ4Î»
+	mov al, cl		; AL=ID¸ßÎ»×Ö½Ú
+	and al, 0Fh		; È¡³öµÍ4Î»
+	;call ShowChar	; µ÷ÓÃÏÔÊ¾×Ö·ûº¯Êý
 	popa
 	pop cx
 nextdir:
 	popa
-	pusha               ;è®¾ç½®æ–°çš„ç›®å½• æç¤ºä¸²
+	cmp word[isBackBool],2  ; Á½¸öµã´ú±íÉÏÒ»¼¶Ä¿Â¼
+	jz .upDir
+	pusha               ;ÉèÖÃÐÂµÄÄ¿Â¼ ÌáÊ¾´®
 	mov ax,ds
 	mov es,ax
 	mov si,[Dir_len]
 	mov di,str2
 	add di,[str2len]
-	dec di      ;å‡åŽ»$ç¬¦å·
+	dec di      ;¼õÈ¥$·ûºÅ
 	add [str2len],si
 	inc word [str2len]
 	cld
@@ -1035,10 +2273,41 @@ nextdir:
 	stosb
 	popa
 	jmp dir_out
-	
-backToRoot
-	mov word [CurrentDirSectors],14
-	mov word [SectorNoOfCurrentDirectory],19
+.upDir:                 ;·µ»ØÉÏ¼¶Ä¿Â¼µÄÅÐ¶Ï,×¢ÒâµÄÊÇÒªÅÐ¶ÏÉÏÒ»¼¶ÊÇ²»ÊÇ¸ùÄ¿Â¼
+	;ÊÇ·ñÊÇ·µ»Ø¸ùÄ¿Â¼ÔÚÇ°ÃæÅÐ¶Ï
+	;µ½´ïÕâÒ»²½µÄ,ÌáÊ¾´®Òª¼õÉÙÒ»¼¶
+	pusha
+	mov ax,ds
+	mov es,ax
+	mov si,[Dir_len]
+	mov di,str2
+	add di,[str2len]
+	std                         ;µ¹×ÅÇå¿Õ
+	mov al,20h                  ;Çåµô/$
+	stosb
+	mov al,20h                 
+	stosb
+	dec di
+.2
+	cmp byte[di],'/'
+	jz .2.1                     ;Óöµ½µÚÒ»¸ö/ÍË³öÀ´
+	mov al,20h                  ;·ñÔòÇå¿Õ
+	stosb
+	dec word [str2len]
+	jmp .2
+.2.1:
+	cld
+	inc di
+	mov al,'$'                  ;Ìí¼Ó$
+	stosb
+	dec word [str2len]
+	popa
+	jmp dir_out
+backToRoot:
+	call getdiskparam	; »ñÈ¡´ÅÅÌ²ÎÊýH&S£¨ÓÃÓÚReadSecºÍlsÀý³Ì£©
+	mov word [CurrentDirSectors],RootDirSectors
+	mov word [SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	;mov byte [drvno], 0 ; ÉèÖÃÇý¶¯Æ÷ºÅÎª0
 	
 	mov di,str2
 	add di,3
@@ -1046,115 +2315,1021 @@ backToRoot
 	stosb
 	mov byte[str2len],4
 	call initialDisk
-dir_out
+dir_out:
+	mov cx,11
+	mov al,20h
+	mov di,Dirbuf            ;Çå¿ÕÄ¿Â¼Dirbuf
+	rep stosb
+	mov word[Dir_len],0
+	
+
+	mov ax,[CurrentDirSectors]
+	mov [nsec],ax
+	mov ax,[SectorNoOfCurrentDirectory]
+	pusha
+	push ax
+	;call space
+	pop ax
+	mov cx,ax
+	; ÏÔÊ¾¸ß4Î»
+	mov al, cl		; AL=ID¸ßÎ»×Ö½Ú
+	and al, 0F0h	; È¡³ö¸ß4Î»
+	shr al, 4		; AL >> 4
+	;call ShowChar	; µ÷ÓÃÏÔÊ¾×Ö·ûº¯Êý
+	; ÏÔÊ¾µÍ4Î»
+	mov al, cl		; AL=ID¸ßÎ»×Ö½Ú
+	and al, 0Fh		; È¡³öµÍ4Î»
+	;call ShowChar	; µ÷ÓÃÏÔÊ¾×Ö·ûº¯Êý
+	popa
+	;call judgeRootTODir
+	;ÅÐ¶ÏÊÇ·ñ´ÓÊÇ¸ùÄ¿Â¼µ½×ÓÄ¿Â¼µÄÇÐ»»
+	cmp word [SectorNoOfLastDirectory],SectorNoOfRootDirectory
+	jz .1     ;ÉÏ´ÎÄ¿Â¼ÊÇ¸ùÄ¿Â¼
+	jmp .2
+.1	cmp word [SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .2.2       ;´Ó¸ùÄ¿Â¼ÌøÖÁ×ÓÄ¿Â¼+1fh
+	add word[SectorNoOfCurrentDirectory],1fh       ;ÎªÊ²Ã´¼Ó1fh£¿ ×ÓÄ¿Â¼ÎÄ¼þÌõÄ¿ÖÐµÄÉÈÇøºÅÊÇÏà¶ÔÓÚÊý¾ÝÇøÆðÊ¼Î»ÖÃµÄ£¬µÃµ½ÎïÀíÉÈÇøºÅµÄ·½·¨ÊÇ+1fh£¨3e00h£©  ÎªÊ²Ã´ÊÇÕâÃ´¶à=_= 
+	;Òª¶ÁµÄÊý¾ÝÉÈÇøµØÖ· = ÉÈÇøÐòºÅ + ¸ùÄ¿Â¼ÉÈÇøÊý + DeltaSectorNo           ¸ùÄ¿Â¼ÉÈÇøÊý + DeltaSectorNo = 17+14 =1fh
+	jmp .2.2 
+.2:	;Ô­±¾ÔÚ×ÓÄ¿Â¼
+	cmp word [SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .2.2     ;ÏÖÔÚÊÇ¸ùÄ¿Â¼²»+1fh
+	add word[SectorNoOfCurrentDirectory],1fh 
+.2.2:	
+	mov ax,[SectorNoOfCurrentDirectory]
+	mov [isec],ax
+	jmp cd_ends
+cd_error:
+	call showError1	; ÏÔÊ¾×Ö·û´®
+cd_ends:	
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	inc dh
+	; ÉèÖÃ¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	add sp,2
+	
+	jmp again
+;--------------------------------------------------------------------
+judgeRootTODir:   
+	
+	ret
+;--------------------------------------------------------------------	
+FileName_rename_len dw 0
+FileSuffixes_len dw 0
+FileName_renameTooLongStr db 'ÎÄ¼þÃûÌ«³¤£¬ÎÞ·¨ÐÞ¸ÄÄãÔìÂð'
+FileName_renameTooLong_len  equ ($ - FileName_renameTooLongStr)/2
+RenameFile_DI dw 0
+IsNotDir dw 1
+rename:
+	mov word [IsNotDir],1
+	pusha
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äDirbuf
+	mov cx, 11	; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøbufµÄ³¤¶È£¨buflen=80£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, Dirbuf		; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	
+	mov word [Dir_len],11 ;ÎÄ¼þÌõÄ¿->ÎÄ¼þÃûÎª11×Ö½Ú
+	
+	mov cx,buflen
+	mov bp,buf
+	add bp,7  ;Ìø¹ýrename  6¸ö×Ö·û
+	;ÔÚ´Ë¿É¼ì²âÊäÈëºÏ·¨ÐÔ
+	push bp    ;±£´æbp
+	mov si,0
+.1:  
+	cmp byte[bp],20h
+	jz .2.0
+	cmp byte[bp],0
+	jz .2
+	cmp byte[bp],'.'
+	jz .2
+	inc si
+	inc bp
+	jmp .1
+.2.0:
+	mov word[IsNotDir],0
+	;mov ax,0fah
+	;call hex2ascii
+.2:
+	pop bp
+	cmp si,11
+	jg rename_tolong
+	mov [FileName_rename_len],si
+	;mov ax,si
+	;call hex2ascii
+	;xor ah,ah
+	;int 16h
+	
+	cmp word[IsNotDir],1     ;×ÓÄ¿Â¼Ìø¹ýÎÄ¼þºó×º¼ì²â
+	jnz .4.1
+	push bp
+	mov [FileName_rename_len],si
+	add bp,si            ;spÖ¸Ïòºó×º
+	add bp,[IsNotDir]             ;¶ÔÓÚÎÄ¼þÌø¹ý. ¶ÔÓÚ×ÓÄ¿Â¼²»±ä
+	mov si,0
+.3:  
+	cmp byte[bp],20h
+	jz .4
+	cmp byte[bp],0
+	jz .4
+	inc si
+	inc bp
+	jmp .3
+.4
+	pop bp
+	cmp si,4
+	jg rename_tolong
+	mov [FileSuffixes_len],si
+
+	;mov ax,si
+	;call hex2ascii
+	;xor ah,ah
+	;int 16h
+	
+	
+	mov si,[FileSuffixes_len]
+	mov di,Dirbuf+8 ;Æ«ÒÆµ½ÎÄ¼þºó×ºÃû
+	cld
+	mov cx,si
+	mov si,bp
+	add si,[FileName_rename_len]	  ;¶¨Î»µ½bufÀïµÄÎÄ¼þºó×º
+	inc si
+	rep movsb
+	stosb
+.4.1:	
+	mov si,[FileName_rename_len]
+	mov di,Dirbuf
+	cld
+	mov cx,si
+	mov si,bp
+	rep movsb
+	
+	popa
+	
+	call tocap_Dirbuf
+	;mov bp,Dirbuf
+	;mov cx,11
+	;call DispStr
+
+;	cmp word[FileSuffixes_len],0
+;	jz .clearsuffix
+;	jmp .next_10
+;.clearsuffix:
+;	mov cx,11
+;	sub cx,[FileName_rename_len]
+;	mov al,20h
+;	mov di,Dirbuf            ;Çå¿ÕÄ¿Â¼Dirbuf ºó×º(Æ¥ÅäÄ¿Â¼ÓÐÐ©bug,Ö»ºÃÇåµôºó×º)
+;	add di,[FileName_rename_len]
+;.next_10:
+	;xor ah,ah
+	;int 16h
+;-------------------------------------------------------------------1
+	push es		; ±£»¤ES
+
+; ÈíÇý¸´Î»
+	xor	ah, ah	; ¹¦ÄÜºÅah=0£¨¸´Î»´ÅÅÌÇý¶¯Æ÷£©
+	xor	dl, dl	; dl=0£¨ÈíÇýA£¬ÈíÇýBÎª1¡¢Ó²ÅÌºÍUÅÌÎª80h£©
+	int	13h		; ´ÅÅÌÖÐ¶Ï
+	
+; ÏÂÃæÔÚµ±Ç°Ä¿Â¼ÖÐÑ°ÕÒ×ÓÄ¿Â¼
+	mov ax,[SectorNoOfCurrentDirectory]
+	;cmp ax,SectorNoOfRootDirectory
+	;jz .1.1
+	;add ax,1fh
+;.1.1
+	mov	word [wSectorNo], ax 	; ¸ø±íÊ¾µ±Ç°ÉÈÇøºÅµÄ
+						; ±äÁ¿wSectorNo¸³³õÖµÎª¸ùÄ¿Â¼ÇøµÄÊ×ÉÈÇøºÅ£¨=19£©
+	mov ax,[CurrentDirSectors]
+	mov word [wRootDirSizeForLoop], ax	; ¸ùÄ¿Â¼ÇøÊ£ÓàÉÈÇøÊý
+										; ³õÊ¼»¯Îª14£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+RENAME_SEARCH_IN_Current_DIR_BEGIN:
+	cmp	word [wRootDirSizeForLoop], 0 ; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	RENAME_NOT_FOUND	; Èô¶ÁÍêÔò±íÊ¾Î´ÕÒµ½Ä¿Â¼Ïî
+	dec	word [wRootDirSizeForLoop]	; µÝ¼õ±äÁ¿wRootDirSizeForLoopµÄÖµ
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸ö¸ùÄ¿Â¼ÉÈÇøµ½×°ÔØÇø
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
+
+	mov	si, Dirbuf		; DS:SI -> Ä¿Â¼Ïî
+	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
+	cld					; Çå³ýDF±êÖ¾Î»
+						; ÖÃ±È½Ï×Ö·û´®Ê±µÄ·½ÏòÎª×ó/ÉÏ[Ë÷ÒýÔö¼Ó]
+	mov	dx, 10h			; Ñ­»·´ÎÊý=16£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
+RENAME_SEARCH_FOR_VOL_FILE:
+	cmp	dx, 0			; Ñ­»·´ÎÊý¿ØÖÆ
+	jz RENAME_GOTO_NEXT_SECTOR_IN_Current_DIR ; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø
+	dec	dx				; µÝ¼õÑ­»·´ÎÊýÖµ			  ¾ÍÌøµ½ÏÂÒ»ÉÈÇø
+	mov	cx,[Dir_len] 	; ³õÊ¼Ñ­»·´ÎÊýÎª11
+RENAME_CMP_FILENAME:
+	repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	cmp	cx, 0
+	jz	RENAME_VOL_FOUND ; Èç¹û±È½ÏÁË11¸ö×Ö·û¶¼ÏàµÈ£¬±íÊ¾ÕÒµ½
+RENAME_DIFFERENT:
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+						; FFE0h = 1111111111100000£¨µÍ5Î»=32=Ä¿Â¼ÌõÄ¿´óÐ¡£©
+	add	di, 20h			; DI += 20h ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	mov	si, Dirbuf		; SIÖ¸Ïò×°ÔØÎÄ¼þÃû´®µÄÆðÊ¼µØÖ·
+	jmp	RENAME_SEARCH_FOR_VOL_FILE; ×ªµ½Ñ­»·¿ªÊ¼´¦
+
+RENAME_GOTO_NEXT_SECTOR_IN_Current_DIR: ;¶ÔÓÚ×ÓÄ¿Â¼LABEL_GOTO_NEXT_SECTOR_IN_Current_DIRÒª×Ô¼ºËã³öÀ´(Ö±½ÓÊ¹ÓÃtoDirÖÐµÄËã·¨)  Óë¸ùÄ¿Â¼Ëã·¨²»Í¬
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
+	pusha
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[wSectorNo]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	exit_rename ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [wSectorNo],ax
+	add	word [wSectorNo],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	RENAME_SEARCH_IN_Current_DIR_BEGIN		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc	word [wSectorNo]	; ¶ÔÓÚ¸ùÄ¿Â¼£¬µÝÔöµ±Ç°ÉÈÇøºÅ
+	jmp	RENAME_SEARCH_IN_Current_DIR_BEGIN
+
+RENAME_NOT_FOUND:
+	pop es			; »Ö¸´ES
+exit_rename:
+	call showError1	; ÏÔÊ¾×Ö·û´®
+	jmp out_rename
+;------------------------------------------------------+
+RENAME_VOL_FOUND
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+	mov [RenameFile_DI],di
+	;¼òµ¥µÄdebug
+	
+	pop es
+	;pusha
+	;mov cx,11
+	;mov bp,di
+	;call DispStr
+	;popa
 	
 	mov cx,11
 	mov al,20h
+	mov di,Dirbuf            ;Çå¿ÕÄ¿Â¼Dirbuf
+	rep stosb
+	
+	mov bp,buf
+	add bp,7  ;Ìø¹ýrename  6¸ö×Ö·û
+
+.0:  
+	cmp byte[bp],20h
+	jz .10
+	cmp byte[bp],0
+	jz .10
+	inc si
+	inc bp
+	jmp .0
+.10
+	inc bp
+	;ÔÚ´Ë¿É¼ì²âÊäÈëºÏ·¨ÐÔ
+	push bp    ;±£´æbp
+	mov si,0
+.1:  
+	cmp byte[bp],20h
+	jz .2
+	cmp byte[bp],0
+	jz .2
+	cmp byte[bp],'.'
+	jz .2
+	inc si
+	inc bp
+	jmp .1
+.2:
+	pop bp
+	cmp si,11
+	jg rename_tolong
+	mov [FileName_rename_len],si
+	;mov ax,si
+	;call hex2ascii
+	
+	cmp word[IsNotDir],1     ;×ÓÄ¿Â¼Ìø¹ýÎÄ¼þºó×º¼ì²â
+	jnz .4.1
+	push bp
+	mov [FileName_rename_len],si
+	add bp,si            ;spÖ¸Ïòºó×º
+	add bp,[IsNotDir]
+	mov si,0
+.3:  
+	cmp byte[bp],20h
+	jz .4
+	cmp byte[bp],0
+	jz .4
+	inc si
+	inc bp
+	jmp .3
+.4
+	pop bp
+	cmp si,4
+	jg rename_tolong
+	mov [FileSuffixes_len],si
+
+	;mov ax,si
+	;call hex2ascii
+	
+	mov si,[FileSuffixes_len]
+	mov di,Dirbuf+8 ;Æ«ÒÆµ½ÎÄ¼þºó×ºÃû
+	cld
+	mov cx,si
+	mov si,bp
+	add si,[FileName_rename_len]	  ;¶¨Î»µ½bufÀïµÄÎÄ¼þºó×º
+	inc si
+	rep movsb
+	stosb
+.4.1:	
+	mov si,[FileName_rename_len]
 	mov di,Dirbuf
+	cld
+	mov cx,si
+	mov si,bp
+	rep movsb
+	
+	call tocap_Dirbuf
+	;mov bp,Dirbuf
+	;mov cx,11
+	;call DispStr
+	
+	;xor ah,ah
+	;int 16h
+	push es
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov di,[RenameFile_DI]
+	
+	mov si,Dirbuf
+	mov cx,11
+	repe movsb			; Ð´»º³åÇø£¬ÐÞ¸Ä¶ÔÓ¦ÎÄ¼þÌõÄ¿
+	
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call WriteSec		; µ÷ÓÃÐ´ÉÈÇøº¯Êý
+	
+	pop es
+	;Dirbuf
+	jmp out_rename
+rename_tolong:;´®Ì«³¤
+	mov cx,FileName_renameTooLong_len
+	mov bp,FileName_renameTooLongStr
+	call DispStr_Chinese
+out_rename:
+	mov cx,11
+	mov al,20h
+	mov di,Dirbuf            ;Çå¿ÕÄ¿Â¼Dirbuf
 	rep stosb
 	mov word[Dir_len],0
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	inc dh
-	; è®¾ç½®å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
+	
 	add sp,2
 	jmp again
 ;--------------------------------------------------------------------	
-edit:
-	mov cx,buflen
-	mov bp,buf
-	call DispStr
-	ret
-;--------------------------------------------------------------------	
 mkdir:
+	;mov cx,buflen
+	;mov bp,buf
+	;call DispStr
+	;ÔÚFAT±íÖÐÕÒÎ´Ê¹ÓÃµÄÏîÄ¿£¬ÔÙÓÃÐ´ÉÈÇøÖÐ¶ÏÐ´×ÓÄ¿Â¼ÉÈÇøbuf£¬²¢ÔÚµ±Ç°Ä¿Â¼Ìí¼ÓÒ»¸ö×ÓÄ¿Â¼Ïî
+		push ax
+	mov ax,[SectorNoOfCurrentDirectory]      ;±£´æ¼ÆËãÏÂÒ»ÉÈÇøÇ°µÄÉÈÇøºÅ
+	mov [SectorNoOfLastDirectory],ax
+	pop ax
+	pusha
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äDirbuf
+	mov cx, 11	; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøbufµÄ³¤¶È£¨buflen=80£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, Dirbuf		; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	
 	mov cx,buflen
 	mov bp,buf
+	add bp,6   ;Ìø¹ýmkdir   Áù¸ö×Ö·û
+	push bp    ;±£´æbp
+	mov si,0
+.1:  
+	cmp byte[bp],20h
+	jz .2
+	cmp byte[bp],0
+	jz .2
+	inc si
+	inc bp
+	jmp .1
+.2:
+	pop bp
+	cmp si,11
+	jg mk_out
+	cmp si,0
+	jz mk_error1
+	mov [Dir_len],si
+	mov di,Dirbuf
+	cld
+	mov cx,si
+	mov si,bp
+	rep movsb
+	stosb
+	popa
+	
+	call tocap_Dirbuf
+	mov bp,Dirbuf      ;»ñµÃÒªÌø×ªÄ¿Â¼µÄÄ¿Â¼Ãû
+	mov cx,11
 	call DispStr
-	ret
-scrollscreen:      ;æ»šåŠ¨å±å¹• al=è¡Œå·
+	
+	.cd_start:
+;-------------------------------------------------------------------1
+	push es		; ±£»¤ES
+
+; ÈíÇý¸´Î»
+	xor	ah, ah	; ¹¦ÄÜºÅah=0£¨¸´Î»´ÅÅÌÇý¶¯Æ÷£©
+	xor	dl, dl	; dl=0£¨ÈíÇýA£¬ÈíÇýBÎª1¡¢Ó²ÅÌºÍUÅÌÎª80h£©
+	int	13h		; ´ÅÅÌÖÐ¶Ï
+	
+; ÏÂÃæÔÚµ±Ç°Ä¿Â¼ÖÐÑ°ÕÒ×ÓÄ¿Â¼
+	mov ax,[SectorNoOfCurrentDirectory]
+	;cmp ax,SectorNoOfRootDirectory
+	;jz .1.1
+	;add ax,1fh
+;.1.1
+	mov	word [wSectorNo], ax 	; ¸ø±íÊ¾µ±Ç°ÉÈÇøºÅµÄ
+						; ±äÁ¿wSectorNo¸³³õÖµÎª¸ùÄ¿Â¼ÇøµÄÊ×ÉÈÇøºÅ£¨=19£©
+	mov ax,[CurrentDirSectors]
+	mov word [wRootDirSizeForLoop], ax	; ¸ùÄ¿Â¼ÇøÊ£ÓàÉÈÇøÊý
+										; ³õÊ¼»¯Îª14£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+MKDIR_SEARCH_IN_Current_DIR_BEGIN:
+	cmp	word [wRootDirSizeForLoop], 0 ; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	MKDIR_NOT_FOUND	; Èô¶ÁÍêÔò±íÊ¾Î´ÕÒµ½Ä¿Â¼Ïî
+	dec	word [wRootDirSizeForLoop]	; µÝ¼õ±äÁ¿wRootDirSizeForLoopµÄÖµ
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸ö¸ùÄ¿Â¼ÉÈÇøµ½×°ÔØÇø
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
+
+	mov	si, Dirbuf		; DS:SI -> Ä¿Â¼Ïî
+	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
+	cld					; Çå³ýDF±êÖ¾Î»
+						; ÖÃ±È½Ï×Ö·û´®Ê±µÄ·½ÏòÎª×ó/ÉÏ[Ë÷ÒýÔö¼Ó]
+	mov	dx, 10h			; Ñ­»·´ÎÊý=16£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
+MKDIR_SEARCH_FOR_VOL_FILE:
+	cmp	dx, 0			; Ñ­»·´ÎÊý¿ØÖÆ
+	jz MKDIR_GOTO_NEXT_SECTOR_IN_Current_DIR ; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø
+	dec	dx				; µÝ¼õÑ­»·´ÎÊýÖµ			  ¾ÍÌøµ½ÏÂÒ»ÉÈÇø
+	mov	cx,11 	; ³õÊ¼Ñ­»·´ÎÊýÎª11
+MKDIR_CMP_FILENAME:
+	repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	cmp	cx, 0
+	jz	MKDIR_VOL_FOUND ; Èç¹û±È½ÏÁË11¸ö×Ö·û¶¼ÏàµÈ£¬±íÊ¾ÕÒµ½
+MKDIR_DIFFERENT:
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+						; FFE0h = 1111111111100000£¨µÍ5Î»=32=Ä¿Â¼ÌõÄ¿´óÐ¡£©
+	add	di, 20h			; DI += 20h ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	mov	si, Dirbuf		; SIÖ¸Ïò×°ÔØÎÄ¼þÃû´®µÄÆðÊ¼µØÖ·
+	jmp	MKDIR_SEARCH_FOR_VOL_FILE; ×ªµ½Ñ­»·¿ªÊ¼´¦
+
+MKDIR_GOTO_NEXT_SECTOR_IN_Current_DIR: ;¶ÔÓÚ×ÓÄ¿Â¼LABEL_GOTO_NEXT_SECTOR_IN_Current_DIRÒª×Ô¼ºËã³öÀ´(Ö±½ÓÊ¹ÓÃtoDirÖÐµÄËã·¨)  Óë¸ùÄ¿Â¼Ëã·¨²»Í¬
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
 	pusha
-	mov	ah, 6			; åŠŸèƒ½å·
-	mov bh,0fh		; è®¾ç½®æ’å…¥ç©ºè¡Œçš„å­—ç¬¦é¢œè‰²ä¸ºé»‘åº•äº®ç™½å­—
-	mov ch, 0			; CH=è¡Œå·ã€CL=åˆ—å·
-	mov cl, 0			; çª—å£å·¦ä¸Šè§’çš„è¡Œåˆ—å·éƒ½ä¸º0
-	mov dh, 24		; çª—å£å³ä¸‹è§’çš„è¡Œå·ï¼Œæ–‡æœ¬å±å¹•25è¡Œï¼Œè¡Œå·=0~24
-	mov dl, 79		; çª—å£å³ä¸‹è§’çš„åˆ—å·ï¼Œæ–‡æœ¬å±å¹•80åˆ—ï¼Œåˆ—å·=0~79
-	int 10h			; æ˜¾ç¤ºä¸­æ–­
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[wSectorNo]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	exit_mk ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [wSectorNo],ax
+	add	word [wSectorNo],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	MKDIR_SEARCH_IN_Current_DIR_BEGIN		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc	word [wSectorNo]	; ¶ÔÓÚ¸ùÄ¿Â¼£¬µÝÔöµ±Ç°ÉÈÇøºÅ
+	jmp	MKDIR_SEARCH_IN_Current_DIR_BEGIN
+exit_mk:			;Ã»ÓÐ×ÓÄ¿Â¼µ¼ÖÂ Ìø×ªÊ§°ÜÖ±½ÓÍË³ö
+MKDIR_NOT_FOUND:    ; Ã»ÓÐÕÒµ½£¬Ôò¿ÉÒÔÌí¼ÓÌõÄ¿
+	pop es			; »Ö¸´ES
+	
+	call CreateDir  ;µ÷ÓÃÉú³ÉÄ¿Â¼º¯Êý
+	
+	jmp mk_out
+;------------------------------------------------------+
+MKDIR_VOL_FOUND:     ; ÕÒµ½ÁË,ÔòÎÞ·¨´´½¨×ÓÄ¿Â¼
+	pop es			; »Ö¸´ES
+	call showError2	; ÏÔÊ¾×Ö·û´®
+	jmp mk_out
+mk_error1:
+	call showError1	; ÏÔÊ¾×Ö·û´®
+mk_out:
+	mov cx,11
+	mov al,20h
+	mov di,Dirbuf            ;Çå¿ÕÄ¿Â¼Dirbuf
+	rep stosb
+	mov word[Dir_len],0
+mk_ends:	
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	inc dh
+	; ÉèÖÃ¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	add sp,2
+	
+	jmp again
+; ------------------------------------------------------------------
+; ´´½¨Ä¿Â¼Ïîº¯Êý,Ä¿Â¼Ãû´æÔÚ DirBufÀïÃæ£¬º¯ÊýµÄÈÎÎñÊÇÔÚµ±Ç°Ä¿Â¼ÉÈÇøÖÐÕÒµ½¿ÕÏÐÌõÄ¿,²¢ÕÒµ½¿ÕÏÐµÄ512BÉÈÇø´æ·Å³õÊ¼»¯µÄÉÈÇøÊý¾Ý
+DefaultDirBuf db 10h
+			resb 10	;10B±£Áô
+			resb 6;db 39h,0a1h,0c2h,48h,50h,0    ;×îºóÐ´ÈëÊ±¼ä¡¢ÈÕÆÚ¡¢¿ªÊ¼´ØºÅ
+			resb 4	;4B´óÐ¡ÎªÁã
+CreateDir:
+	;-------------------------------------------------------------------1
+	push es		; ±£»¤ES
+
+; ÈíÇý¸´Î»
+	xor	ah, ah	; ¹¦ÄÜºÅah=0£¨¸´Î»´ÅÅÌÇý¶¯Æ÷£©
+	xor	dl, dl	; dl=0£¨ÈíÇýA£¬ÈíÇýBÎª1¡¢Ó²ÅÌºÍUÅÌÎª80h£©
+	int	13h		; ´ÅÅÌÖÐ¶Ï
+	
+; ÏÂÃæÔÚµ±Ç°Ä¿Â¼ÖÐÑ°ÕÒ¿ÕÌõÄ¿
+	mov ax,[SectorNoOfCurrentDirectory]
+	mov	word [wSectorNo], ax 	; ¸ø±íÊ¾µ±Ç°ÉÈÇøºÅµÄ
+						; ±äÁ¿wSectorNo¸³³õÖµÎª¸ùÄ¿Â¼ÇøµÄÊ×ÉÈÇøºÅ£¨=19£©
+	mov ax,[CurrentDirSectors]
+	mov word [wRootDirSizeForLoop], ax	; ¸ùÄ¿Â¼ÇøÊ£ÓàÉÈÇøÊý
+										; ³õÊ¼»¯Îª14£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+CreateDir_SEARCH_IN_Current_DIR_BEGIN:
+	cmp	word [wRootDirSizeForLoop], 0 ; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	CreateDir_NOT_FOUND	; Èô¶ÁÍêÔò±íÊ¾Î´ÕÒµ½Ä¿Â¼Ïî
+	dec	word [wRootDirSizeForLoop]	; µÝ¼õ±äÁ¿wRootDirSizeForLoopµÄÖµ
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸ö¸ùÄ¿Â¼ÉÈÇøµ½×°ÔØÇø
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
+
+	;mov	si, MKbuf		; DS:SI -> Ä¿Â¼Ïî
+	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
+	cld					; Çå³ýDF±êÖ¾Î»
+						; ÖÃ±È½Ï×Ö·û´®Ê±µÄ·½ÏòÎª×ó/ÉÏ[Ë÷ÒýÔö¼Ó]
+	mov	dx, 10h			; Ñ­»·´ÎÊý=1£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
+CreateDir_SEARCH_FOR_VOL_FILE:
+	cmp	dx, 0			; Ñ­»·´ÎÊý¿ØÖÆ
+	jz CreateDir_GOTO_NEXT_SECTOR_IN_Current_DIR ; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø
+	dec	dx				; µÝ¼õÑ­»·´ÎÊýÖµ			  ¾ÍÌøµ½ÏÂÒ»ÉÈÇø
+CreateDir_CMP_FILENAME:
+	;repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	;cmp	cx, 0
+	;ÅÐ¶ÏµÚÒ»¸ö×Ö½ÚµÄÖµ
+	cmp byte[es:di],0
+	jz actually_found
+	cmp byte[es:di],05
+	jz actually_found
+	cmp byte[es:di],0e5h
+	jz actually_found
+	
+	;jz	CreateDir_VOL_FOUND ; Èç¹û±È½ÏÁË11¸ö×Ö·û¶¼ÏàµÈ£¬±íÊ¾ÕÒµ½
+CreateDir_DIFFERENT:
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+						; FFE0h = 1111111111100000£¨µÍ5Î»=32=Ä¿Â¼ÌõÄ¿´óÐ¡£©
+	add	di, 20h			; DI += 20h ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	;mov	si, MKbuf		; SIÖ¸Ïò×°ÔØÎÄ¼þÃû´®µÄÆðÊ¼µØÖ·
+	jmp	CreateDir_SEARCH_FOR_VOL_FILE; ×ªµ½Ñ­»·¿ªÊ¼´¦
+
+CreateDir_GOTO_NEXT_SECTOR_IN_Current_DIR: ;¶ÔÓÚ×ÓÄ¿Â¼LABEL_GOTO_NEXT_SECTOR_IN_Current_DIRÒª×Ô¼ºËã³öÀ´(Ö±½ÓÊ¹ÓÃtoDirÖÐµÄËã·¨)  Óë¸ùÄ¿Â¼Ëã·¨²»Í¬
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
+	pusha
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[wSectorNo]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	CreateDir_NOT_FOUND ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [wSectorNo],ax
+	add	word [wSectorNo],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	CreateDir_SEARCH_IN_Current_DIR_BEGIN		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc	word [wSectorNo]	; ¶ÔÓÚ¸ùÄ¿Â¼£¬µÝÔöµ±Ç°ÉÈÇøºÅ
+	jmp	CreateDir_SEARCH_IN_Current_DIR_BEGIN
+actually_found:          ;·¢ÏÖ¿ÕÓà¿é
+	;ÉèÖÃÎÄ¼þÃû
+	;ÉèÖÃÊôÐÔ(Ä¬ÈÏ)×ÓÄ¿Â¼=10h
+	;ÉèÖÃÊ±¼ä(ÔÝÊ±²»×÷¿¼ÂÇ)
+	;ÎÄ¼þ´óÐ¡Ä¬ÈÏÈ«0
+	pop es
+
+	push es
+	cld
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+	mov al,0fbh
+	;call hex2ascii
+	
+	mov ax,di
+	push ax
+	mov al,ah
+	;call hex2ascii
+	pop ax
+	;call hex2ascii
+	mov si,Dirbuf
+	mov cx,11
+	repe movsb			; Ð´»º³åÇø£¬ÐÞ¸Ä¶ÔÓ¦ÎÄ¼þÌõÄ¿  ÎÄ¼þÃû
+	
+	;¼ÆËã³öÊ±¼ä¡¢ÈÕÆÚ
+	call CountTimeDate
+	
+	;fat±íÖÐ±éÀúµÃµ½¿ÕÏÐÇø,·ÖÅä¸ø×ÓÄ¿Â¼
+	;ÉèÖÃfat±íÏîÎª×îºó´Ø  getEmptyFatEntry  setEmptyFatEntry
+	call getEmptyFatEntry
+	push ax
+	;call hex2ascii
+	;xor ah,ah
+	;int 16h
+	pop ax
+	push ax
+	mov [InitialDirSector],ax    ;±£´æ¿ÕÏÐµÄÉÈÇøºÅ£¬ÏÂÃæ¿ªÊ¼Ð´ÉÈÇø
+	call setEmptyFatEntry
+	pop ax
+	
+	push di
+	mov di,DefaultDirBuf
+	mov word [ds:di+1ah-11],ax  ;Ð´Èë¶ÔÓ¦fatÉÈÇø
+	pop di
+	
+	;=======================================
+	;³õÊ¼»¯×ÓÄ¿Â¼ÉÈÇø
+	push di
+	mov di,InitialDirBuf
+	mov word [ds:di+1ah],ax  ;Ð´Èë¶ÔÓ¦fatÉÈÇø(¿ªÊ¼´ØºÅ).
+	mov ax,[SectorNoOfCurrentDirectory]
+	cmp ax,19                ;¸ùÄ¿Â¼Óë×ÓÄ¿Â¼ÉÈÇøº¬Òå²»Í¬£¬±È½ÏÄÔ²Ð£¬cdToDirºÍmkDir¾ùÒªÅÐ¶Ï
+	jnz .noNeedToAdd_1fh
+	add ax,1fh
+	jmp MKjudgeEnds
+.noNeedToAdd_1fh:
+	sub ax,1fh
+MKjudgeEnds:
+	mov word [ds:di+1ah+32],ax  ;Ð´Èëµ±Ç°Ä¿Â¼´ØºÅ ffffg..
+	pop di
+	call CountTimeDate_Initial
+	call InitialDir
+	;=======================================
+	;Ð´Ä¿Â¼ÌõÄ¿
+	mov si,DefaultDirBuf
+	mov cx,21
+	repe movsb			; Ð´»º³åÇø£¬ÐÞ¸Ä¶ÔÓ¦ÎÄ¼þÌõÄ¿  Ä¬ÈÏÊôÐÔ
+	
+	;mov al,0cbh
+	;call hex2ascii
+	;xor ah,ah
+	;int 16h
+	
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call WriteSec		; µ÷ÓÃÐ´ÉÈÇøº¯Êý
+	jmp create_ends
+CreateDir_NOT_FOUND:	
+	pop es
+	;mov al,0fah
+	;call hex2ascii
+	push es
+create_ends:
+	pop es
+	
+	ret
+; -------------------------------------------------------------------
+InitialDirSector dw 0
+InitialDirBuf  db 2Eh,20h,20h,20h,20h,20h,20h,20h,20h,20h,20h,10h,00h,00h,00h,00h
+			   resb 16
+			   db 2Eh,2Eh,20h,20h,20h,20h,20h,20h,20h,20h,20h,10h,00h,00h,00h,00h
+			   resb 16
+			   resb 512-64
+InitialDir: ;¸ù¾ÝÉÈÇøºÅÐ´Èë
+	push es
+	pusha
+	mov ax,ds
+	mov es,ax
+	mov bx,InitialDirBuf
+	mov cl,1
+	mov ax,[InitialDirSector]
+	add ax,1fh
+	call WriteSec
+	popa
+	pop es
+	ret
+; -------------------------------------------------------------------
+CountTimeDate_Initial:
+	push dx
+	push di
+	;=============ÉèÖÃÊ±¼ä================Ê±¼ä=Ð¡Ê±*2048+·ÖÖÓ*32+Ãë/2
+	mov dx,0
+	; »ñÈ¡Ê±ÐÅÏ¢
+	mov al, 4			; Ê±µÄÆ«ÒÆµØÖ·Îª4
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÊ±ÐÅÏ¢
+	call bcd2hex
+	
+	mov dl,al
+	shl dx,11          ;X2048 Ê±¼ä¹«Ê½ Ê±¼ä=Ð¡Ê±*2048+·ÖÖÓ*32+Ãë/2
+	
+	; »ñÈ¡·ÖÐÅÏ¢
+	mov al, 2			; ·ÖµÄÆ«ÒÆµØÖ·Îª2
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈë·ÖÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0   
+	shl ax,5           ;X32
+	add dx,ax
+	
+	; »ñÈ¡ÃëÐÅÏ¢
+	mov al, 0			; ÃëµÄÆ«ÒÆµØÖ·Îª0
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÃëÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	shr ax,1           ;/2
+	add dx,ax
+	
+	push di
+	mov di,InitialDirBuf
+	mov word [ds:di+16h],dx  ;Ð´Èëµ±Ç°Ê±¼ä.
+	mov word [ds:di+16h+32],dx  ;Ð´Èëµ±Ç°Ê±¼ä..
+	pop di
+	
+	;==============ÉèÖÃÈÕÆÚ===============ÈÕÆÚ=(Äê·Ý-1980)*512+ÔÂ·Ý*32+ÈÕ
+	mov dx,0
+	; »ñÈ¡ÄêÐÅÏ¢
+	mov al, 9			; ÄêµÄÆ«ÒÆµØÖ·Îª9
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÄêÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	add ax,2000-1980
+	shl ax,9
+	add dx,ax
+	
+	; »ñÈ¡ÔÂÐÅÏ¢
+	mov al, 8			; ÔÂµÄÆ«ÒÆµØÖ·Îª8
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÔÂÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	shl ax,5
+	add dx,ax
+	
+	; »ñÈ¡ÈÕÐÅÏ¢
+	mov al, 7			; ÈÕµÄÆ«ÒÆµØÖ·Îª7
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÈÕÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	add dx,ax
+	
+	push di
+	mov di,InitialDirBuf
+	mov word [ds:di+18h],dx  ;Ð´Èëµ±Ç°ÈÕÆÚ.
+	mov word [ds:di+18h+32],dx  ;Ð´Èëµ±Ç°ÈÕÆÚ..
+	pop di
+	
+	pop di
+	pop dx
+	ret
+; -------------------------------------------------------------------
+CountTimeDate:
+	push dx
+	push di
+	;=============ÉèÖÃÊ±¼ä================Ê±¼ä=Ð¡Ê±*2048+·ÖÖÓ*32+Ãë/2
+	mov dx,0
+	; »ñÈ¡Ê±ÐÅÏ¢
+	mov al, 4			; Ê±µÄÆ«ÒÆµØÖ·Îª4
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÊ±ÐÅÏ¢
+	call bcd2hex
+	
+	mov dl,al
+	shl dx,11          ;X2048 Ê±¼ä¹«Ê½ Ê±¼ä=Ð¡Ê±*2048+·ÖÖÓ*32+Ãë/2
+	
+	; »ñÈ¡·ÖÐÅÏ¢
+	mov al, 2			; ·ÖµÄÆ«ÒÆµØÖ·Îª2
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈë·ÖÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0   
+	shl ax,5           ;X32
+	add dx,ax
+	
+	; »ñÈ¡ÃëÐÅÏ¢
+	mov al, 0			; ÃëµÄÆ«ÒÆµØÖ·Îª0
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÃëÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	shr ax,1           ;/2
+	add dx,ax
+	
+	push di
+	mov di,DefaultDirBuf
+	mov word [ds:di+16h-11],dx  ;Ð´Èëµ±Ç°Ê±¼ä
+	pop di
+	
+	;==============ÉèÖÃÈÕÆÚ===============ÈÕÆÚ=(Äê·Ý-1980)*512+ÔÂ·Ý*32+ÈÕ
+	mov dx,0
+	; »ñÈ¡ÄêÐÅÏ¢
+	mov al, 9			; ÄêµÄÆ«ÒÆµØÖ·Îª9
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÄêÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	add ax,2000-1980
+	shl ax,9
+	add dx,ax
+	
+	; »ñÈ¡ÔÂÐÅÏ¢
+	mov al, 8			; ÔÂµÄÆ«ÒÆµØÖ·Îª8
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÔÂÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	shl ax,5
+	add dx,ax
+	
+	; »ñÈ¡ÈÕÐÅÏ¢
+	mov al, 7			; ÈÕµÄÆ«ÒÆµØÖ·Îª7
+	out 70h, al		; Ö¸¶¨´æ´¢µ¥ÔªµØÖ·
+	in al, 71h			; ¶ÁÈëÈÕÐÅÏ¢
+	call bcd2hex
+	
+	mov ah,0
+	add dx,ax
+	
+	push di
+	mov di,DefaultDirBuf
+	mov word [ds:di+18h-11],dx  ;Ð´Èëµ±Ç°ÈÕÆÚ
+	pop di
+	
+	pop di
+	pop dx
+	ret
+; ------------------------------------------------------------------
+bcd2hex:  ;×éºÏÊ®½øÖÆbcdÂë ×ª 16½øÖÆ  Èë¿Ú£ºal  ³ö¿ÚAL
+	push dx
+	push bx
+	mov dx,0
+	mov dl,al
+	and dl,0fh     ;½ØÈ¡µÍËÄÎ»  ¸öÎ»©
+	and al,0f0h    ;½ØÈ¡¸ß4Î»   Ê®Î»
+	shr al,4 	   ;ÒÆÖÁµÍÎ»
+	mov ah,0
+	mov bl,10
+	mul bl         ;³Ë10
+	add al,dl      ;¼Ó¸öÎ»
+	
+	mov ah,0
+	pop bx
+	pop dx
+	ret
+; ------------------------------------------------------------------
+scrollscreen:      ;¹ö¶¯ÆÁÄ» al=ÐÐºÅ
+	pusha
+	mov	ah, 6			; ¹¦ÄÜºÅ
+	mov bh,11110000b		; ÉèÖÃ±³¾°É«ÎªºÚÉ«
+	mov ch, 0			; CH=ÐÐºÅ¡¢CL=ÁÐºÅ
+	mov cl, 0			; ´°¿Ú×óÉÏ½ÇµÄÐÐÁÐºÅ¶¼Îª0
+	mov dh, 29		; ´°¿ÚÓÒÏÂ½ÇµÄÐÐºÅ£¬ÎÄ±¾ÆÁÄ»25ÐÐ£¬ÐÐºÅ=0~24
+	mov dl, 79		; ´°¿ÚÓÒÏÂ½ÇµÄÁÐºÅ£¬ÎÄ±¾ÆÁÄ»80ÁÐ£¬ÁÐºÅ=0~79
+	int 10h			; ÏÔÊ¾ÖÐ¶Ï
 	popa
 	ret	
 ; -------------------------------------------------------------------
 helpStr:
 	db 'You can use the following inner command:'
 helpStrLen equ $-helpStr
-help: ; æ˜¾ç¤ºå¸®åŠ©ä¿¡æ¯
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
+help: ; ÏÔÊ¾°ïÖúÐÅÏ¢
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
 	
-	cmp dh,23
+	cmp dh,28
 	jl .0
 	mov al,2
 	call scrollscreen
-	mov dh,22
-.0
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, helpStr 	; BP=ä¸²åœ°å€
-	mov cx, helpStrLen	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
+	mov dh,26
+.0:
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, helpStr 	; BP=´®µØÖ·
+	mov cx, helpStrLen	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
 
-	inc dh          ;è¡Œå·+1
-	inc dh          ;è¡Œå·+1
+	inc dh          ;ÐÐºÅ+1
+	inc dh          ;ÐÐºÅ+1
 	
-	; å¾ªçŽ¯æ˜¾ç¤ºæç¤ºä¸²
+	; Ñ­»·ÏÔÊ¾ÌáÊ¾´®
 	push si
 	push di
-	mov cx,N       ;å‘½ä»¤ä¸²ä¸ªæ•°
+	mov cx,N       ;ÃüÁî´®¸öÊý
 	mov si,0
 	mov di,0
 .helps:
 	push cx
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 2 		; ç¬¬2åˆ—
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 2 		; µÚ2ÁÐ
 	
-	mov bp, cmdstr 	; BP=ä¸²åœ°å€
+	mov bp, cmdstr 	; BP=´®µØÖ·
 	add bp,si
-	mov cx, 8	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
+	mov cx, 8	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
 	
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 10 		; ç¬¬11åˆ—
-	mov bp, cmdHelpStr 	; BP=ä¸²åœ°å€
+	mov ah, 42h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 10 		; µÚ11ÁÐ
+	mov bp, cmdHelpStr_chin 	; BP=´®µØÖ·
 	add bp,di
-	mov cx, 30	; ä¸²é•¿
+	mov cx, 15	; ´®³¤
 	
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
+	int 21h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
 	
 	add si,8
 	add di,30
 	inc dh
 	
-	cmp dh,24
+	cmp dh,28
 	jl .1
 	mov al,1
 	call scrollscreen
-	mov dh,23
-.1
+	mov dh,27
+.1:
 	pop cx
 	loop .helps
 	pop di
@@ -1162,103 +3337,103 @@ help: ; æ˜¾ç¤ºå¸®åŠ©ä¿¡æ¯
 	
 	inc dh
 	call newline
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	ret				; ´ÓÀý³Ì·µ»Ø
 	
 ; -------------------------------------------------------------------
-; å†…éƒ¨å‘½ä»¤ä¾‹ç¨‹ç»“æŸ
+; ÄÚ²¿ÃüÁîÀý³Ì½áÊø
 ; ===================================================================
 
 
 ; ===================================================================
-; å‘½ä»¤è¡Œä¸»å¾ªçŽ¯ä¾‹ç¨‹å¼€å§‹
+; ÃüÁîÐÐÖ÷Ñ­»·Àý³Ì¿ªÊ¼
 ; -------------------------------------------------------------------
-prompt: ; æ˜¾ç¤ºå‘½ä»¤è¡Œç³»ç»Ÿæç¤ºä¸²ä¾‹ç¨‹
-	call newline	; å›žè½¦æ¢è¡Œ
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	; æ˜¾ç¤ºæç¤ºä¸²
-	mov ah, 13h 	; åŠŸèƒ½å·
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bl, 0fh 	; äº®ç™½
-	mov bh, 0 		; ç¬¬0é¡µ
-	mov dl, 0 		; ç¬¬0åˆ—
-	mov bp, str2 	; BP=ä¸²åœ°å€
-	mov cx, [str2len]	; ä¸²é•¿
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+prompt: ; ÏÔÊ¾ÃüÁîÐÐÏµÍ³ÌáÊ¾´®Àý³Ì
+	call newline	; »Ø³µ»»ÐÐ
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	; ÏÔÊ¾ÌáÊ¾´®
+	mov ah, 13h 	; ¹¦ÄÜºÅ
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bl, 0fh 	; ÁÁ°×
+	mov bh, 0 		; µÚ0Ò³
+	mov dl, 0 		; µÚ0ÁÐ
+	mov bp, str2 	; BP=´®µØÖ·
+	mov cx, [str2len]	; ´®³¤
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
 blank db 20h
 ; -------------------------------------------------------------------
-getstrln: ; èŽ·å–é”®ç›˜è¾“å…¥çš„å‘½ä»¤ä¸²è¡Œ
-	cld				; æ¸…é™¤æ–¹å‘æ ‡å¿—ä½ï¼ˆä½¿æ‰«æå­—ç¬¦ä¸²æ–¹å‘ä¸ºä»Žä¸²é¦–åˆ°ä¸²å°¾ï¼‰
+getstrln: ; »ñÈ¡¼üÅÌÊäÈëµÄÃüÁî´®ÐÐ
+	cld				; Çå³ý·½Ïò±êÖ¾Î»£¨Ê¹É¨Ãè×Ö·û´®·½ÏòÎª´Ó´®Ê×µ½´®Î²£©
 	
-	; ç”¨ç©ºæ ¼ç¬¦ï¼ˆ20hï¼‰å¡«å……buf
-	mov cx, buflen	; å¾ªçŽ¯æ¬¡æ•°CX=å‘½ä»¤è¡Œç¼“å†²åŒºbufçš„é•¿åº¦ï¼ˆbuflen=80ï¼‰
-	mov al, 20h		; AL=è¦å¡«å……çš„ç©ºæ ¼ç¬¦ASCIIç 
-	mov di, buf		; ES:DI=å­—ç¬¦ä¸²çš„èµ·å§‹åœ°å€
-	rep stosb		; CX>0æ—¶å°†ALå­˜å‚¨åˆ°[ES:DI]ï¼ŒCX--ã€DI++
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äbuf
+	mov cx, buflen	; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøbufµÄ³¤¶È£¨buflen=80£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, buf		; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
 	
-	; ç”¨ç©ºæ ¼ç¬¦ï¼ˆ20hï¼‰å¡«å……fnbufçš„å‰8ä¸ªå­—èŠ‚
-	mov cx, cslen	; å¾ªçŽ¯æ¬¡æ•°CX=å‘½ä»¤ä¸²æœ€å¤§çš„é•¿åº¦ï¼ˆcslen=8ï¼‰
-	mov al, 20h		; AL=è¦å¡«å……çš„ç©ºæ ¼ç¬¦ASCIIç 
-	mov di, fnbuf	; ES:DI=å­—ç¬¦ä¸²çš„èµ·å§‹åœ°å€
-	rep stosb		; CX>0æ—¶å°†ALå­˜å‚¨åˆ°[ES:DI]ï¼ŒCX--ã€DI++
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äfnbufµÄÇ°8¸ö×Ö½Ú
+	mov cx, cslen	; Ñ­»·´ÎÊýCX=ÃüÁî´®×î´óµÄ³¤¶È£¨cslen=8£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, fnbuf	; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
 	
-	mov si, 0		; å½“å‰å­—ç¬¦åç§»ä½ç½® SI = 0
-keyin: ; æŽ¥å—é”®ç›˜è¾“å…¥
-	; è¯»æŒ‰é”®ï¼ˆè¿”å›žçš„æŒ‰é”®ASCIIç åœ¨ALä¸­ï¼‰
-	mov ah, 0 		; åŠŸèƒ½å·
-	int 16h 		; è°ƒç”¨16Hå·ä¸­æ–­
-	; å¯¹å›žè½¦ç¬¦ï¼ˆ0DHï¼‰ç»“æŸè¾“å…¥
-	cmp al, 0dh 	; æ¯”è¾ƒALä¸­çš„é”®å…¥å­—ç¬¦ä¸Žå›žè½¦ç¬¦ï¼ˆASCIIç ä¸º0DHï¼‰
-	je return 		; ç›¸ç­‰è·³è½¬åˆ°ä»Žä¾‹ç¨‹è¿”å›ž
+	mov si, 0		; µ±Ç°×Ö·ûÆ«ÒÆÎ»ÖÃ SI = 0
+keyin: ; ½ÓÊÜ¼üÅÌÊäÈë
+	; ¶Á°´¼ü£¨·µ»ØµÄ°´¼üASCIIÂëÔÚALÖÐ£©
+	mov ah, 0 		; ¹¦ÄÜºÅ
+	int 16h 		; µ÷ÓÃ16HºÅÖÐ¶Ï
+	; ¶Ô»Ø³µ·û£¨0DH£©½áÊøÊäÈë
+	cmp al, 0dh 	; ±È½ÏALÖÐµÄ¼üÈë×Ö·ûÓë»Ø³µ·û£¨ASCIIÂëÎª0DH£©
+	je return 		; ÏàµÈÌø×ªµ½´ÓÀý³Ì·µ»Ø
 	cmp al, 08h
 	je backspace
-	; ä¿å­˜æŒ‰é”®å­—ç¬¦åˆ°buf
+	; ±£´æ°´¼ü×Ö·ûµ½buf
 	mov [buf + si], al; buf[SI]=AL
 	inc si			; SI++
-	; å¤ªé•¿æ—¶è·³å‡º
+	; Ì«³¤Ê±Ìø³ö
 	cmp si, buflen	; SI >= 80 ?
-	jae goout		; >= æ—¶è·³è½¬
+	jae goout		; >= Ê±Ìø×ª
 	jmp next_k
 	
 backspace:
-	cmp si,0        ;æ²¡æœ‰è¾“å…¥çš„å­—ç¬¦è·³è½¬ç»§ç»­è¾“å…¥
+	cmp si,0        ;Ã»ÓÐÊäÈëµÄ×Ö·ûÌø×ª¼ÌÐøÊäÈë
 	je keyin
 	
 	dec si
-	mov byte [buf + si], 20h; å¡«å…¥ç©ºæ ¼
+	mov byte [buf + si], 20h; ÌîÈë¿Õ¸ñ
 	
-	; æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹ï¼ˆéœ€å…ˆç½®ä¸²é•¿CXå’Œä¸²åœ°å€BPï¼‰
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
+	; ÏÔÊ¾×Ö·û´®Àý³Ì£¨ÐèÏÈÖÃ´®³¤CXºÍ´®µØÖ·BP£©
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
 	pusha
-	mov cx,1       ; ä¸²é•¿1
-	mov bp,blank   ; ä¸²åœ°å€
-	push cx			; ä¿æŠ¤CXï¼ˆè¿›æ ˆï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	pop cx			; æ¢å¤CXï¼ˆå‡ºæ ˆï¼‰
-	;10	2	ç½®å…‰æ ‡ä½ç½®	BH=é¡µå·
-    ;DH,DL=è¡Œ,åˆ—
+	mov cx,1       ; ´®³¤1
+	mov bp,blank   ; ´®µØÖ·
+	push cx			; ±£»¤CX£¨½øÕ»£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	pop cx			; »Ö¸´CX£¨³öÕ»£©
+	;10	2	ÖÃ¹â±êÎ»ÖÃ	BH=Ò³ºÅ
+    ;DH,DL=ÐÐ,ÁÐ
 	
-	dec dl          ; é€€æ ¼
+	dec dl          ; ÍË¸ñ
 	push dx
 	mov ah,2
 	mov bh,0
 	int 10h
 	pop dx
-	;dec dl          ; å†é€€ä¸€æ ¼
-	; åœ¨å½“å‰ä½ç½®æ˜¾ç¤ºå­—ç¬¦ä¸²ï¼ˆä¸²é•¿CXå’Œä¸²åœ°å€BPå·²é¢„å…ˆè®¾ç½®å¥½äº†ï¼‰
-	mov ah, 13h		; BIOSä¸­æ–­çš„åŠŸèƒ½å·ï¼ˆæ˜¾ç¤ºå­—ç¬¦ä¸²ï¼‰
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bh, 0 		; é¡µå·=0
-	mov bl, 0fh		; å­—ç¬¦é¢œè‰²=ä¸é—ªï¼ˆ0ï¼‰é»‘åº•ï¼ˆ000ï¼‰äº®ç™½å­—ï¼ˆ1111ï¼‰
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
+	;dec dl          ; ÔÙÍËÒ»¸ñ
+	; ÔÚµ±Ç°Î»ÖÃÏÔÊ¾×Ö·û´®£¨´®³¤CXºÍ´®µØÖ·BPÒÑÔ¤ÏÈÉèÖÃºÃÁË£©
+	mov ah, 13h		; BIOSÖÐ¶ÏµÄ¹¦ÄÜºÅ£¨ÏÔÊ¾×Ö·û´®£©
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bh, 0 		; Ò³ºÅ=0
+	mov bl, 0fh		; ×Ö·ûÑÕÉ«=²»ÉÁ£¨0£©ºÚµ×£¨000£©ÁÁ°××Ö£¨1111£©
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
 	
-	;10	2	ç½®å…‰æ ‡ä½ç½®	BH=é¡µå·
-    ;DH,DL=è¡Œ,åˆ—
+	;10	2	ÖÃ¹â±êÎ»ÖÃ	BH=Ò³ºÅ
+    ;DH,DL=ÐÐ,ÁÐ
 	
 	push dx
 	mov ah,2
@@ -1269,384 +3444,511 @@ backspace:
 	popa
 	jmp keyin
 	
-	; æ˜¾ç¤ºALä¸­çš„é”®å…¥å­—ç¬¦
+	; ÏÔÊ¾ALÖÐµÄ¼üÈë×Ö·û
 next_k:
-	mov ah, 0eh 	; åŠŸèƒ½å·
-	mov bl, 0 		; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	jmp keyin		; å¾ªçŽ¯è¯»å­˜æ˜¾æŒ‰é”®
+	mov ah, 0eh 	; ¹¦ÄÜºÅ
+	mov bl, 0fh 	; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	jmp keyin		; Ñ­»·¶Á´æÏÔ°´¼ü
 return:
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
+	ret 			; ´ÓÀý³Ì·µ»Ø
 
-goout: ; é”®å…¥çš„å­—ç¬¦æ•°è¶…è¿‡ç¼“å†²åŒºé•¿åº¦æ—¶è·³è½¬åˆ°æ­¤
-	call showtoolong; æ˜¾ç¤ºä¸²å¤ªé•¿å‡ºé”™ä¿¡æ¯
-	add sp, 2		; å¼¹å‡ºCALLæ—¶åŽ‹æ ˆçš„è¿”å›žåœ°å€
-	jmp again		; é‡æ–°å¼€å§‹ä¸»å¾ªçŽ¯
+goout: ; ¼üÈëµÄ×Ö·ûÊý³¬¹ý»º³åÇø³¤¶ÈÊ±Ìø×ªµ½´Ë
+	call showtoolong; ÏÔÊ¾´®Ì«³¤³ö´íÐÅÏ¢
+	add sp, 2		; µ¯³öCALLÊ±Ñ¹Õ»µÄ·µ»ØµØÖ·
+	jmp again		; ÖØÐÂ¿ªÊ¼Ö÷Ñ­»·
 	
 ; -------------------------------------------------------------------
-dtlen: ; ç¡®å®šå‘½ä»¤ä¸²é•¿åº¦
-	mov cx, buflen	; CX = è¾“å…¥ç¼“å†²åŒºé•¿åº¦ï¼ˆ80ï¼‰
-	mov al, 20h		; AL = ç©ºæ ¼ç¬¦
-	mov di, buf		; DIæŒ‡å‘buf
-	; åœ¨bufä¸­æ‰¾åˆ°ç¬¬ä¸€ä¸ªç©ºæ ¼ç¬¦åŽåœæ­¢ï¼š
-	repne scasb		; CX>0 && [di]â‰ AL æ—¶DI++ç»§ç»­æ‰«æï¼Œå¦åˆ™é€€å‡ºå¾ªçŽ¯
-	jcxz toolong	; CX=0åˆ™æ²¡æ‰¾åˆ°ç©ºæ ¼ç¬¦ï¼Œä¸²é•¿n = buflen >> cslen (= 8)
-	; è®¡ç®— n = è¾“å…¥ç¼“å†²åŒºé•¿åº¦ - CX - 1
+dtlen: ; È·¶¨ÃüÁî´®³¤¶È
+	mov cx, buflen	; CX = ÊäÈë»º³åÇø³¤¶È£¨80£©
+	mov al, 20h		; AL = ¿Õ¸ñ·û
+	mov di, buf		; DIÖ¸Ïòbuf
+	; ÔÚbufÖÐÕÒµ½µÚÒ»¸ö¿Õ¸ñ·ûºóÍ£Ö¹£º
+	repne scasb		; CX>0 && [di]¡ÙAL Ê±DI++¼ÌÐøÉ¨Ãè£¬·ñÔòÍË³öÑ­»·
+	jcxz toolong	; CX=0ÔòÃ»ÕÒµ½¿Õ¸ñ·û£¬´®³¤n = buflen >> cslen (= 8)
+	; ¼ÆËã n = ÊäÈë»º³åÇø³¤¶È - CX - 1
 	mov word [n], buflen ; n = buflen
 	sub [n], cx		; n - CX
 	dec word [n]	; n--
-	je zlen 		; n=0ï¼šé‡æ–°å¼€å§‹å‘½ä»¤è¡Œå¾ªçŽ¯
+	je zlen 		; n=0£ºÖØÐÂ¿ªÊ¼ÃüÁîÐÐÑ­»·
 	cmp word [n], cslen ; n > 8 ?
-	ja toolong		; å‘½ä»¤ä¸²é•¿è¶…è¿‡8æ—¶è·³è½¬
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
+	ja toolong		; ÃüÁî´®³¤³¬¹ý8Ê±Ìø×ª
+	ret 			; ´ÓÀý³Ì·µ»Ø
 
-toolong: ; å‘½ä»¤ä¸²å¤ªé•¿ï¼ˆæŠ¥é”™é€€å‡ºï¼‰
-	call showwrong	; æ˜¾ç¤ºå‡ºé”™ä¿¡æ¯
-zlen: ; n=0æ—¶é‡æ–°å¼€å§‹
-	add sp, 2		; å¼¹å‡ºcallåŽ‹æ ˆçš„è¿”å›žåœ°å€
-	jmp again		; é‡æ–°å¼€å§‹
-
-; -------------------------------------------------------------------
-tocap: ; è½¬æ¢æˆå¤§å†™å­—æ¯
-	mov cx, [n]		; å¾ªçŽ¯æ¬¡æ•° CX = n
-	mov bx, 0		; å­—ç¬¦åç§»å€¼ BX = 0ï¼ˆåˆå€¼ä¸º0ï¼‰
-next: ; å¾ªçŽ¯å¼€å§‹
-	cmp byte [buf + bx], 61h	; å­—ç¬¦ä¸Žå­—æ¯aï¼ˆ61hï¼‰æ¯”è¾ƒ
-	jb notll					; å­—ç¬¦ < 61h è·³è½¬
-	cmp byte [buf + bx], 7ah	; å­—ç¬¦ä¸Žå­—æ¯zï¼ˆ7Ahï¼‰æ¯”è¾ƒ
-	ja notll					; å­—ç¬¦ > 7Ah è·³è½¬
-	sub byte [buf + bx], 20h	; å°å†™å­—æ¯ - 20h = å¤§å†™å­—æ¯
-notll: ; ä¸æ˜¯å°å†™å­—æ¯
-	inc bx			; é€’å¢žåç§»å€¼
-	loop next		; ç»§ç»­å¾ªçŽ¯
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
-; -------------------------------------------------------------------
-tocap_Dirbuf: ; è½¬æ¢æˆå¤§å†™å­—æ¯
-	mov cx, [Dir_len]		; å¾ªçŽ¯æ¬¡æ•° CX = n
-	mov bx, 0		; å­—ç¬¦åç§»å€¼ BX = 0ï¼ˆåˆå€¼ä¸º0ï¼‰
-.next: ; å¾ªçŽ¯å¼€å§‹
-	cmp byte [Dirbuf + bx], 61h	; å­—ç¬¦ä¸Žå­—æ¯aï¼ˆ61hï¼‰æ¯”è¾ƒ
-	jb .notll					; å­—ç¬¦ < 61h è·³è½¬
-	cmp byte [Dirbuf + bx], 7ah	; å­—ç¬¦ä¸Žå­—æ¯zï¼ˆ7Ahï¼‰æ¯”è¾ƒ
-	ja .notll					; å­—ç¬¦ > 7Ah è·³è½¬
-	sub byte [Dirbuf + bx], 20h	; å°å†™å­—æ¯ - 20h = å¤§å†™å­—æ¯
-.notll: ; ä¸æ˜¯å°å†™å­—æ¯
-	inc bx			; é€’å¢žåç§»å€¼
-	loop .next		; ç»§ç»­å¾ªçŽ¯
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
+toolong: ; ÃüÁî´®Ì«³¤£¨±¨´íÍË³ö£©
+	call showwrong	; ÏÔÊ¾³ö´íÐÅÏ¢
+zlen: ; n=0Ê±ÖØÐÂ¿ªÊ¼
+	add sp, 2		; µ¯³öcallÑ¹Õ»µÄ·µ»ØµØÖ·
+	jmp again		; ÖØÐÂ¿ªÊ¼
 
 ; -------------------------------------------------------------------
-newstr:	; æž„é€ æ–°ä¸²ï¼ˆå‘½ä»¤ä¸² --> COMæ–‡ä»¶åï¼‰
-	mov si, buf		; æºä¸²èµ·å§‹åœ°å€
-	mov di, fnbuf	; ç›®çš„ä¸²èµ·å§‹åœ°å€
-	mov cx, [n]		; å¾ªçŽ¯æ¬¡æ•° CX = n
-	; å°†è¾“å…¥ç¼“å†²åŒºbufä¸­çš„å‘½ä»¤ä¸²å¤åˆ¶åˆ°æ–‡ä»¶åç¼“å†²åŒºfnbufï¼š
-	rep movsb		; CX > 0æ—¶ [ES:DI] = [DS:SI]ã€CX--ï¼ŒCX = 0æ—¶é€€å‡ºå¾ªçŽ¯
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
+tocap: ; ×ª»»³É´óÐ´×ÖÄ¸
+	mov cx, [n]		; Ñ­»·´ÎÊý CX = n
+	mov bx, 0		; ×Ö·ûÆ«ÒÆÖµ BX = 0£¨³õÖµÎª0£©
+next: ; Ñ­»·¿ªÊ¼
+	cmp byte [buf + bx], 61h	; ×Ö·ûÓë×ÖÄ¸a£¨61h£©±È½Ï
+	jb notll					; ×Ö·û < 61h Ìø×ª
+	cmp byte [buf + bx], 7ah	; ×Ö·ûÓë×ÖÄ¸z£¨7Ah£©±È½Ï
+	ja notll					; ×Ö·û > 7Ah Ìø×ª
+	sub byte [buf + bx], 20h	; Ð¡Ð´×ÖÄ¸ - 20h = ´óÐ´×ÖÄ¸
+notll: ; ²»ÊÇÐ¡Ð´×ÖÄ¸
+	inc bx			; µÝÔöÆ«ÒÆÖµ
+	loop next		; ¼ÌÐøÑ­»·
+	ret 			; ´ÓÀý³Ì·µ»Ø
+; -------------------------------------------------------------------
+tocap_Dirbuf: ; ×ª»»³É´óÐ´×ÖÄ¸
+	mov cx, [Dir_len]		; Ñ­»·´ÎÊý CX = n
+	mov bx, 0		; ×Ö·ûÆ«ÒÆÖµ BX = 0£¨³õÖµÎª0£©
+.next: ; Ñ­»·¿ªÊ¼
+	cmp byte [Dirbuf + bx], 61h	; ×Ö·ûÓë×ÖÄ¸a£¨61h£©±È½Ï
+	jb .notll					; ×Ö·û < 61h Ìø×ª
+	cmp byte [Dirbuf + bx], 7ah	; ×Ö·ûÓë×ÖÄ¸z£¨7Ah£©±È½Ï
+	ja .notll					; ×Ö·û > 7Ah Ìø×ª
+	sub byte [Dirbuf + bx], 20h	; Ð¡Ð´×ÖÄ¸ - 20h = ´óÐ´×ÖÄ¸
+.notll: ; ²»ÊÇÐ¡Ð´×ÖÄ¸
+	inc bx			; µÝÔöÆ«ÒÆÖµ
+	loop .next		; ¼ÌÐøÑ­»·
+	ret 			; ´ÓÀý³Ì·µ»Ø
 
 ; -------------------------------------------------------------------
-iscmd: ; åˆ¤æ–­æ˜¯å¦ä¸ºå†…éƒ¨å‘½ä»¤
-	mov word [i], 0	; å¤–å¾ªçŽ¯å˜é‡/å†…éƒ¨å‘½ä»¤çš„åºå·i=0ï¼ˆåˆå€¼ä¸º0ï¼‰
-	mov dx, cmdstr	; å‘½ä»¤ä¸²çš„åˆå§‹èµ·å§‹åœ°å€
+newstr:	; ¹¹ÔìÐÂ´®£¨ÃüÁî´® --> COMÎÄ¼þÃû£©
+	mov si, buf		; Ô´´®ÆðÊ¼µØÖ·
+	mov di, fnbuf	; Ä¿µÄ´®ÆðÊ¼µØÖ·
+	mov cx, [n]		; Ñ­»·´ÎÊý CX = n
+	; ½«ÊäÈë»º³åÇøbufÖÐµÄÃüÁî´®¸´ÖÆµ½ÎÄ¼þÃû»º³åÇøfnbuf£º
+	rep movsb		; CX > 0Ê± [ES:DI] = [DS:SI]¡¢CX--£¬CX = 0Ê±ÍË³öÑ­»·
+	ret 			; ´ÓÀý³Ì·µ»Ø
+
+; -------------------------------------------------------------------
+iscmd: ; ÅÐ¶ÏÊÇ·ñÎªÄÚ²¿ÃüÁî
+	mov word [i], 0	; ÍâÑ­»·±äÁ¿/ÄÚ²¿ÃüÁîµÄÐòºÅi=0£¨³õÖµÎª0£©
+	mov dx, cmdstr	; ÃüÁî´®µÄ³õÊ¼ÆðÊ¼µØÖ·
 	
-.1: ; å¤–å¾ªçŽ¯
-	mov si, fnbuf	; æºä¸²èµ·å§‹åœ°å€
-	mov di, dx		; ç›®çš„ä¸²èµ·å§‹åœ°å€
-	mov cx, cslen 	; å†…å¾ªçŽ¯æ¬¡æ•°
-	; é‡å¤æ¯”è¾ƒä¸¤å­—ç¬¦ä¸²ä¸­çš„å­—ç¬¦ï¼ŒCX--ï¼Œç›´åˆ°ä¸ç›¸ç­‰æˆ–CX=0
-	repe cmpsb		; CX>0 && [DS:SI]==[ES:DI]æ—¶ï¼ŒCX--ã€SI++ã€DI++ï¼Œç»§ç»­å¾ªçŽ¯ï¼›å¦åˆ™é€€å‡º
-	jcxz docmd		; CX=0ï¼Œè¡¨ç¤ºä¸¤ä¸²ç›¸ç­‰ï¼Œä¸ºç¬¬BXä¸ªå†…éƒ¨å‘½ä»¤ä¸²ï¼Œè·³è½¬æ‰§è¡Œè¯¥å‘½ä»¤
-	inc word [i]	; CXâ‰ 0ï¼Œè¡¨ç¤ºä¸¤ä¸²ä¸ç­‰ï¼Œi++
-	cmp word [i], N	; i=Nï¼ˆå†…éƒ¨å‘½ä»¤æ€»æ•°ï¼‰ï¼Ÿ
-	je .2			; ä¸æ˜¯å†…éƒ¨å‘½ä»¤ï¼Œé€€å‡ºå¾ªçŽ¯
-	add dx, cslen	; DX + 8 =ä¸‹ä¸€å‘½ä»¤ä¸²çš„èµ·å§‹åœ°å€
-	jmp .1			; ç»§ç»­å¤–å¾ªçŽ¯
-.2: ; è¿”å›ž
-	;call showwrong	; æ˜¾ç¤ºå‡ºé”™ä¿¡æ¯
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
+.1: ; ÍâÑ­»·
+	mov si, fnbuf	; Ô´´®ÆðÊ¼µØÖ·
+	mov di, dx		; Ä¿µÄ´®ÆðÊ¼µØÖ·
+	mov cx, cslen 	; ÄÚÑ­»·´ÎÊý
+	; ÖØ¸´±È½ÏÁ½×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	repe cmpsb		; CX>0 && [DS:SI]==[ES:DI]Ê±£¬CX--¡¢SI++¡¢DI++£¬¼ÌÐøÑ­»·£»·ñÔòÍË³ö
+	jcxz docmd		; CX=0£¬±íÊ¾Á½´®ÏàµÈ£¬ÎªµÚBX¸öÄÚ²¿ÃüÁî´®£¬Ìø×ªÖ´ÐÐ¸ÃÃüÁî
+	inc word [i]	; CX¡Ù0£¬±íÊ¾Á½´®²»µÈ£¬i++
+	cmp word [i], N	; i=N£¨ÄÚ²¿ÃüÁî×ÜÊý£©£¿
+	je .2			; ²»ÊÇÄÚ²¿ÃüÁî£¬ÍË³öÑ­»·
+	add dx, cslen	; DX + 8 =ÏÂÒ»ÃüÁî´®µÄÆðÊ¼µØÖ·
+	jmp .1			; ¼ÌÐøÍâÑ­»·
+.2: ; ·µ»Ø
+	;call showwrong	; ÏÔÊ¾³ö´íÐÅÏ¢
+	ret 			; ´ÓÀý³Ì·µ»Ø
 	
-docmd: ; æ‰§è¡Œå†…éƒ¨å‘½ä»¤
-	add sp, 2		; å¼¹å‡ºcall iscmdæ—¶åŽ‹æ ˆçš„è¿”å›žåœ°å€
-	call newline	; å›žè½¦æ¢è¡Œ
-	mov bx, [i]		; BX = å†…éƒ¨å‘½ä»¤çš„åºå·i
-	shl bx, 1		; åç§»åœ°å€ = å†…éƒ¨å‘½ä»¤çš„åºå·*2
-	call near [cmdaddr + bx] ; è°ƒç”¨ç¬¬iä¸ªå†…éƒ¨å‘½ä»¤
-	jmp again		; è·³è½¬åˆ°å‘½ä»¤è¡Œå¾ªçŽ¯
+docmd: ; Ö´ÐÐÄÚ²¿ÃüÁî
+	add sp, 2		; µ¯³öcall iscmdÊ±Ñ¹Õ»µÄ·µ»ØµØÖ·
+	call newline	; »Ø³µ»»ÐÐ
+	mov bx, [i]		; BX = ÄÚ²¿ÃüÁîµÄÐòºÅi
+	shl bx, 1		; Æ«ÒÆµØÖ· = ÄÚ²¿ÃüÁîµÄÐòºÅ*2
+	call [cmdaddr + bx] ; µ÷ÓÃµÚi¸öÄÚ²¿ÃüÁî
+	jmp again		; Ìø×ªµ½ÃüÁîÐÐÑ­»·
 	
 ;--------------------------------------------------------------------
-exec: ; æ‰§è¡Œå¤–éƒ¨å‘½ä»¤ï¼ˆCOMæ–‡ä»¶ï¼‰
+exec: ; Ö´ÐÐÍâ²¿ÃüÁî£¨COMÎÄ¼þ£©
 
-; å®šä¹‰å¸¸é‡ï¼ˆCOMæ–‡ä»¶åŠ è½½ä½ç½®å’Œç£ç›˜å‚æ•°ï¼‰
-BaseOfLoader	equ	4000h	; COMæ–‡ä»¶è¢«åŠ è½½åˆ°çš„ä½ç½® ----  æ®µåœ°å€
-OffsetOfLoader	equ	100h	; COMæ–‡ä»¶è¢«åŠ è½½åˆ°çš„ä½ç½® ---- åç§»åœ°å€
-RootDirSectors	equ	14		; æ ¹ç›®å½•å ç”¨çš„æ‰‡åŒºæ•°
-SectorNoOfRootDirectory	equ	19	; æ ¹ç›®å½•åŒºçš„é¦–æ‰‡åŒºå·
-SectorNoOfFAT1	equ	1		; FAT#1çš„é¦–æ‰‡åŒºå· = BPB_RsvdSecCnt
+; ¶¨Òå³£Á¿£¨COMÎÄ¼þ¼ÓÔØÎ»ÖÃºÍ´ÅÅÌ²ÎÊý£©
+BaseOfLoader	equ	2000h	; COMÎÄ¼þ±»¼ÓÔØµ½µÄÎ»ÖÃ ----  ¶ÎµØÖ·
+OffsetOfLoader	equ	100h	; COMÎÄ¼þ±»¼ÓÔØµ½µÄÎ»ÖÃ ---- Æ«ÒÆµØÖ·
+RootDirSectors	equ	14		; ¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+SectorNoOfRootDirectory	equ	19	; ¸ùÄ¿Â¼ÇøµÄÊ×ÉÈÇøºÅ
+SectorNoOfFAT1	equ	1		; FAT#1µÄÊ×ÉÈÇøºÅ = BPB_RsvdSecCnt
 DeltaSectorNo	equ	17		; DeltaSectorNo = BPB_RsvdSecCnt + 
 							; (BPB_NumFATs * FATSz) - 2 = 1 + (2*9) -2 = 17
-							; æ–‡ä»¶çš„å¼€å§‹æ‰‡åŒºå· = ç›®å½•æ¡ç›®ä¸­çš„å¼€å§‹æ‰‡åŒºå· 
-							; + æ ¹ç›®å½•å ç”¨æ‰‡åŒºæ•°ç›® + DeltaSectorNo
-	push es		; ä¿æŠ¤ES
-
-; è½¯é©±å¤ä½
-	xor	ah, ah	; åŠŸèƒ½å·ah=0ï¼ˆå¤ä½ç£ç›˜é©±åŠ¨å™¨ï¼‰
-	xor	dl, dl	; dl=0ï¼ˆè½¯é©±Aï¼Œè½¯é©±Bä¸º1ã€ç¡¬ç›˜å’ŒUç›˜ä¸º80hï¼‰
-	int	13h		; ç£ç›˜ä¸­æ–­
+							; ÎÄ¼þµÄ¿ªÊ¼ÉÈÇøºÅ = Ä¿Â¼ÌõÄ¿ÖÐµÄ¿ªÊ¼ÉÈÇøºÅ 
+							; + ¸ùÄ¿Â¼Õ¼ÓÃÉÈÇøÊýÄ¿ + DeltaSectorNo
+	call Shut_dc
+	push es		; ±£»¤ES
+; ÈíÇý¸´Î»
+	xor	ah, ah	; ¹¦ÄÜºÅah=0£¨¸´Î»´ÅÅÌÇý¶¯Æ÷£©
+	xor	dl, dl	; dl=0£¨ÈíÇýA£¬ÈíÇýBÎª1¡¢Ó²ÅÌºÍUÅÌÎª80h£©
+	int	13h		; ´ÅÅÌÖÐ¶Ï
 	
-; ä¸‹é¢åœ¨ç£ç›˜æ ¹ç›®å½•ä¸­å¯»æ‰¾ COMæ–‡ä»¶
-	mov	word [wSectorNo], SectorNoOfRootDirectory 	; ç»™è¡¨ç¤ºå½“å‰æ‰‡åŒºå·çš„
-						; å˜é‡wSectorNoèµ‹åˆå€¼ä¸ºæ ¹ç›®å½•åŒºçš„é¦–æ‰‡åŒºå·ï¼ˆ=19ï¼‰
-	mov word [wRootDirSizeForLoop], RootDirSectors	; æ ¹ç›®å½•åŒºå‰©ä½™æ‰‡åŒºæ•°
-										; åˆå§‹åŒ–ä¸º14ï¼Œåœ¨å¾ªçŽ¯ä¸­ä¼šé€’å‡è‡³é›¶
+; ÏÂÃæÔÚ´ÅÅÌÄ¿Â¼ÖÐÑ°ÕÒ COMÎÄ¼þ
+	;ÅÐ¶ÏÊÇ¸ùÄ¿Â¼»òÕß×ÓÄ¿Â¼
+	push ax
+	mov ax,[SectorNoOfCurrentDirectory] 	; ¸ø±íÊ¾µ±Ç°ÉÈÇøºÅµÄ
+	mov	word [wSectorNo], ax
+						; ±äÁ¿wSectorNo¸³³õÖµÎªµ±Ç°Ä¿Â¼ÇøµÄÊ×ÉÈÇøºÅ
+	mov ax, [CurrentDirSectors]	; Ê£ÓàÉÈÇøÊý
+	mov word [wRootDirSizeForLoop],ax
+										; ³õÊ¼»¯Îªµ±Ç°Ä¿Â¼ËùÕ¼ÉÈÇøÊý£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+	pop ax
 LABEL_SEARCH_IN_ROOT_DIR_BEGIN:
-	cmp	word [wRootDirSizeForLoop], 0 ; åˆ¤æ–­æ ¹ç›®å½•åŒºæ˜¯å¦å·²è¯»å®Œ
-	jz	LABEL_NOT_FOUND	; è‹¥è¯»å®Œåˆ™è¡¨ç¤ºæœªæ‰¾åˆ°COMæ–‡ä»¶
-	dec	word [wRootDirSizeForLoop]	; é€’å‡å˜é‡wRootDirSizeForLoopçš„å€¼
-	; è°ƒç”¨è¯»æ‰‡åŒºå‡½æ•°è¯»å…¥ä¸€ä¸ªæ ¹ç›®å½•æ‰‡åŒºåˆ°è£…è½½åŒº
+	cmp	word [wRootDirSizeForLoop], 0 ; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	LABEL_NOT_FOUND	; Èô¶ÁÍêÔò±íÊ¾Î´ÕÒµ½COMÎÄ¼þ
+	dec	word [wRootDirSizeForLoop]	; µÝ¼õ±äÁ¿wRootDirSizeForLoopµÄÖµ
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸öÄ¿Â¼ÉÈÇøµ½×°ÔØÇø
 	mov	ax, BaseOfLoader
-	mov	es, ax			; ES <- BaseOfLoaderï¼ˆ4000hï¼‰
-	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoaderï¼ˆ100hï¼‰
-	mov	ax, [wSectorNo]	; AX <- æ ¹ç›®å½•ä¸­çš„å½“å‰æ‰‡åŒºå·
-	mov	cl, 1			; åªè¯»ä¸€ä¸ªæ‰‡åŒº
-	call ReadSec		; è°ƒç”¨è¯»æ‰‡åŒºå‡½æ•°
+	mov	es, ax			; ES <- BaseOfLoader£¨4000h£©
+	mov	bx, OffsetOfLoader	; BX <- OffsetOfLoader£¨100h£©
+	mov	ax, [wSectorNo]	; AX <- ¸ùÄ¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov	cl, 1			; Ö»¶ÁÒ»¸öÉÈÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
 
-	mov	si, fnbuf		; DS:SI -> COMæ–‡ä»¶
+	mov	si, fnbuf		; DS:SI -> COMÎÄ¼þ
 	mov	di, OffsetOfLoader ; ES:DI -> BaseOfLoader:0100
-	cld					; æ¸…é™¤DFæ ‡å¿—ä½
-						; ç½®æ¯”è¾ƒå­—ç¬¦ä¸²æ—¶çš„æ–¹å‘ä¸ºå·¦/ä¸Š[ç´¢å¼•å¢žåŠ ]
-	mov	dx, 10h			; å¾ªçŽ¯æ¬¡æ•°=16ï¼ˆæ¯ä¸ªæ‰‡åŒºæœ‰16ä¸ªæ–‡ä»¶æ¡ç›®ï¼š512/32=16ï¼‰
+	cld					; Çå³ýDF±êÖ¾Î»
+						; ÖÃ±È½Ï×Ö·û´®Ê±µÄ·½ÏòÎª×ó/ÉÏ[Ë÷ÒýÔö¼Ó]
+	mov	dx, 10h			; Ñ­»·´ÎÊý=16£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
 LABEL_SEARCH_FOR_COM_FILE:
-	cmp	dx, 0			; å¾ªçŽ¯æ¬¡æ•°æŽ§åˆ¶
-	jz LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR ; è‹¥å·²è¯»å®Œä¸€æ‰‡åŒº
-	dec	dx				; é€’å‡å¾ªçŽ¯æ¬¡æ•°å€¼			  å°±è·³åˆ°ä¸‹ä¸€æ‰‡åŒº
-	mov	cx, 11			; åˆå§‹å¾ªçŽ¯æ¬¡æ•°ä¸º11
+	cmp	dx, 0			; Ñ­»·´ÎÊý¿ØÖÆ
+	jz LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR ; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø
+	dec	dx				; µÝ¼õÑ­»·´ÎÊýÖµ			  ¾ÍÌøµ½ÏÂÒ»ÉÈÇø
+	mov	cx, 11			; ³õÊ¼Ñ­»·´ÎÊýÎª11
 LABEL_CMP_FILENAME:
-	repe cmpsb			; é‡å¤æ¯”è¾ƒå­—ç¬¦ä¸²ä¸­çš„å­—ç¬¦ï¼ŒCX--ï¼Œç›´åˆ°ä¸ç›¸ç­‰æˆ–CX=0
+	repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
 	cmp	cx, 0
-	jz	LABEL_FILENAME_FOUND ; å¦‚æžœæ¯”è¾ƒäº†11ä¸ªå­—ç¬¦éƒ½ç›¸ç­‰ï¼Œè¡¨ç¤ºæ‰¾åˆ°
+	jz	LABEL_FILENAME_FOUND ; Èç¹û±È½ÏÁË11¸ö×Ö·û¶¼ÏàµÈ£¬±íÊ¾ÕÒµ½
 LABEL_DIFFERENT:
-	and	di, 0FFE0h		; DI &= E0ä¸ºäº†è®©å®ƒæŒ‡å‘æœ¬æ¡ç›®å¼€å¤´ï¼ˆä½Ž5ä½æ¸…é›¶ï¼‰
-						; FFE0h = 1111111111100000ï¼ˆä½Ž5ä½=32=ç›®å½•æ¡ç›®å¤§å°ï¼‰
-	add	di, 20h			; DI += 20h ä¸‹ä¸€ä¸ªç›®å½•æ¡ç›®
-	mov	si, fnbuf		; SIæŒ‡å‘è£…è½½æ–‡ä»¶åä¸²çš„èµ·å§‹åœ°å€
-	jmp	LABEL_SEARCH_FOR_COM_FILE; è½¬åˆ°å¾ªçŽ¯å¼€å§‹å¤„
+	and	di, 0FFE0h		; DI &= E0ÎªÁËÈÃËüÖ¸Ïò±¾ÌõÄ¿¿ªÍ·£¨µÍ5Î»ÇåÁã£©
+						; FFE0h = 1111111111100000£¨µÍ5Î»=32=Ä¿Â¼ÌõÄ¿´óÐ¡£©
+	add	di, 20h			; DI += 20h ÏÂÒ»¸öÄ¿Â¼ÌõÄ¿
+	mov	si, fnbuf		; SIÖ¸Ïò×°ÔØÎÄ¼þÃû´®µÄÆðÊ¼µØÖ·
+	jmp	LABEL_SEARCH_FOR_COM_FILE; ×ªµ½Ñ­»·¿ªÊ¼´¦
 
-LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
-	add	word [wSectorNo], 1 ; é€’å¢žå½“å‰æ‰‡åŒºå·
+LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:             ;ssssss
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
+	pusha
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[wSectorNo]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	LABEL_NOT_FOUND ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [wSectorNo],ax
+	add	word [wSectorNo],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	LABEL_SEARCH_IN_ROOT_DIR_BEGIN		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc	word [wSectorNo]	; ¶ÔÓÚ¸ùÄ¿Â¼£¬µÝÔöµ±Ç°ÉÈÇøºÅ
 	jmp	LABEL_SEARCH_IN_ROOT_DIR_BEGIN
 
 LABEL_NOT_FOUND:
-	pop es			; æ¢å¤ES
-	call showwrong	; æ˜¾ç¤ºå­—ç¬¦ä¸²
+	pop es			; »Ö¸´ES
+	call showwrong	; ÏÔÊ¾×Ö·û´®
 	ret
 
-; ä¸‹é¢å°†COMæ–‡ä»¶åŠ è½½åˆ°å†…å­˜
-LABEL_FILENAME_FOUND:	; æ‰¾åˆ° COMæ–‡ä»¶åŽä¾¿æ¥åˆ°è¿™é‡Œç»§ç»­
-	; è®¡ç®—æ–‡ä»¶çš„èµ·å§‹æ‰‡åŒºå·
-	mov	ax, RootDirSectors	; AX=æ ¹ç›®å½•å ç”¨çš„æ‰‡åŒºæ•°
-	and	di, 0FFE0h		; DI -> å½“å‰æ¡ç›®çš„å¼€å§‹åœ°å€
-	add	di, 1Ah			; DI -> æ–‡ä»¶çš„é¦–æ‰‡åŒºå·åœ¨æ¡ç›®ä¸­çš„åç§»åœ°å€
-	mov cx, word [es:di] ; CX=æ–‡ä»¶çš„é¦–æ‰‡åŒºå·
-	push cx				; ä¿å­˜æ­¤æ‰‡åŒºåœ¨FATä¸­çš„åºå·
-	add	cx, ax			; CX=æ–‡ä»¶çš„ç›¸å¯¹èµ·å§‹æ‰‡åŒºå·+æ ¹ç›®å½•å ç”¨çš„æ‰‡åŒºæ•°
-	add	cx, DeltaSectorNo ; CL <- COMæ–‡ä»¶çš„èµ·å§‹æ‰‡åŒºå·(0-based)
-	mov	ax, BaseOfLoader
-	mov	es, ax			; ES <- BaseOfLoaderï¼ˆCOMç¨‹åºåŸºå€=4000hï¼‰
-	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoaderï¼ˆCOMç¨‹åºåç§»åœ°å€=100hï¼‰
-	mov	ax, cx			; AX <- èµ·å§‹æ‰‡åŒºå·
+; ÏÂÃæ½«COMÎÄ¼þ¼ÓÔØµ½ÄÚ´æ
+LABEL_FILENAME_FOUND:	; ÕÒµ½ COMÎÄ¼þºó±ãÀ´µ½ÕâÀï¼ÌÐø
+	; ¼ÆËãÎÄ¼þµÄÆðÊ¼ÉÈÇøºÅ
+	mov	ax, [CurrentDirSectors]	; AX=µ±Ç°Ä¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+	and	di, 0FFE0h		; DI -> µ±Ç°ÌõÄ¿µÄ¿ªÊ¼µØÖ·
+	add	di, 1Ah			; DI -> ÎÄ¼þµÄÊ×ÉÈÇøºÅÔÚÌõÄ¿ÖÐµÄÆ«ÒÆµØÖ·
+	mov cx, word [es:di] ; CX=ÎÄ¼þµÄÊ×ÉÈÇøºÅ
+	push cx				; ±£´æ´ËÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	add	cx, RootDirSectors			; CX=ÎÄ¼þµÄÏà¶ÔÆðÊ¼ÉÈÇøºÅ+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý +¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý+¸ùÄ¿Â¼Õ¼ÓÃµÄÉÈÇøÊý
+	;ÖØÒªµÄÊÂÇéËµÒ»Íò±é=_=,ÕÒÕâ¸öbugÓÃÁË¼¸Ð¡Ê±   Ô­´úÂëadd	cx,ax   ÏÖÔÚ×ÓÄ¿Â¼ax²¢²»ÊÇ¸ùÄ¿Â¼Ê×ÉÈÇøºÅ
+	add	cx, DeltaSectorNo ; CL <- COMÎÄ¼þµÄÆðÊ¼ÉÈÇøºÅ(0-based)
+	mov	ax, BaseOfLoader      ;+1C
+	mov	es, ax			; ES <- BaseOfLoader£¨COM³ÌÐò»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨COM³ÌÐòÆ«ÒÆµØÖ·=100h£©
+	mov	ax, cx			; AX <- ÆðÊ¼ÉÈÇøºÅ
 
 LABEL_GOON_LOADING_FILE:
-	push bx				; ä¿å­˜COMç¨‹åºåç§»åœ°å€
-	mov	cl, 1			; 1ä¸ªæ‰‡åŒº
-	call ReadSec		; è¯»æ‰‡åŒº
+	push bx				; ±£´æCOM³ÌÐòÆ«ÒÆµØÖ·
+	mov	cl, 1			; 1¸öÉÈÇø
+	call ReadSec		; ¶ÁÉÈÇø
 
-	; è®¡ç®—æ–‡ä»¶çš„ä¸‹ä¸€æ‰‡åŒºå·
-	pop bx				; å–å‡ºCOMç¨‹åºåç§»åœ°å€
-	pop	ax				; å–å‡ºæ­¤æ‰‡åŒºåœ¨FATä¸­çš„åºå·
-	call GetFATEntry	; èŽ·å–FATé¡¹ä¸­çš„ä¸‹ä¸€ç°‡å·
-	cmp	ax, 0FF8h		; æ˜¯å¦æ˜¯æ–‡ä»¶æœ€åŽç°‡
-	jae	LABEL_FILE_LOADED ; â‰¥FF8hæ—¶è·³è½¬ï¼Œå¦åˆ™è¯»ä¸‹ä¸€ä¸ªç°‡
-	push ax				; ä¿å­˜æ‰‡åŒºåœ¨FATä¸­çš„åºå·
-	mov	dx, RootDirSectors ; DX = æ ¹ç›®å½•æ‰‡åŒºæ•° = 14
-	add	ax, dx			; æ‰‡åŒºåºå· + æ ¹ç›®å½•æ‰‡åŒºæ•°
-	add	ax, DeltaSectorNo ; AX = è¦è¯»çš„æ•°æ®æ‰‡åŒºåœ°å€
-	add	bx, [BPB_BytsPerSec] ; BX+512æŒ‡å‘COMç¨‹åºåŒºçš„ä¸‹ä¸€ä¸ªæ‰‡åŒºåœ°å€
+	; ¼ÆËãÎÄ¼þµÄÏÂÒ»ÉÈÇøºÅ
+	pop bx				; È¡³öCOM³ÌÐòÆ«ÒÆµØÖ·
+	pop	ax				; È¡³ö´ËÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	cmp	ax, 0FF8h		; ÊÇ·ñÊÇÎÄ¼þ×îºó´Ø
+	jae	LABEL_FILE_LOADED ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	push ax				; ±£´æÉÈÇøÔÚFATÖÐµÄÐòºÅ
+	mov	dx, RootDirSectors	; DX = ¸ùÄ¿Â¼ÉÈÇøÊý
+	add	ax, dx			; ÉÈÇøÐòºÅ + ¸ùÄ¿Â¼ÉÈÇøÊý
+	add	ax, DeltaSectorNo ; AX = Òª¶ÁµÄÊý¾ÝÉÈÇøµØÖ·
+	add	bx, [BPB_BytsPerSec] ; BX+512Ö¸ÏòCOM³ÌÐòÇøµÄÏÂÒ»¸öÉÈÇøµØÖ·
 	jmp	LABEL_GOON_LOADING_FILE
 
-; ä¸‹é¢è·³è½¬æ‰§è¡ŒCOMç¨‹åº
+; ÏÂÃæÌø×ªÖ´ÐÐCOM³ÌÐò
 LABEL_FILE_LOADED:
-	add sp, 4			; å¼¹å‡ºcallæŒ‡ä»¤åŽ‹æ ˆçš„è¿”å›žåœ°å€å’Œä¿å­˜çš„ES
-	jmp	BaseOfLoader:OffsetOfLoader	; è¿™ä¸€å¥è·³è½¬åˆ°å·²åŠ è½½åˆ°å†…å­˜ä¸­çš„
-						; COMæ–‡ä»¶çš„å¼€å§‹å¤„ï¼Œå¼€å§‹æ‰§è¡Œ COMæ–‡ä»¶çš„ä»£ç ã€‚
-						; ï¼ˆCOMç¨‹åºé€šè¿‡è°ƒç”¨21hä¸­æ–­è¿”å›žå‘½ä»¤è¡Œç¨‹åºï¼‰
+	pop es
+	add sp, 2			; µ¯³öcallÖ¸ÁîÑ¹Õ»µÄ·µ»ØµØÖ·ºÍ±£´æµÄES
+	jmp	BaseOfLoader:OffsetOfLoader	; ÕâÒ»¾äÌø×ªµ½ÒÑ¼ÓÔØµ½ÄÚ´æÖÐµÄ
+						; COMÎÄ¼þµÄ¿ªÊ¼´¦£¬¿ªÊ¼Ö´ÐÐ COMÎÄ¼þµÄ´úÂë¡£
+						; £¨COM³ÌÐòÍ¨¹ýµ÷ÓÃ21hÖÐ¶Ï·µ»ØÃüÁîÐÐ³ÌÐò£©
 
-; å˜é‡
-BPB_BytsPerSec	DW 512	; æ¯æ‰‡åŒºå­—èŠ‚æ•°
-BPB_SecPerTrk	DW 18	; æ¯ç£é“æ‰‡åŒºæ•°
+; ±äÁ¿
+BPB_BytsPerSec	DW 512	; Ã¿ÉÈÇø×Ö½ÚÊý
+BPB_SecPerTrk	DW 18	; Ã¿´ÅµÀÉÈÇøÊý
 
-wRootDirSizeForLoop	dw	RootDirSectors	; æ ¹ç›®å½•åŒºå‰©ä½™æ‰‡åŒºæ•°
-										; åˆå§‹åŒ–ä¸º14ï¼Œåœ¨å¾ªçŽ¯ä¸­ä¼šé€’å‡è‡³é›¶
-wSectorNo		dw	0	; å½“å‰æ‰‡åŒºå·ï¼Œåˆå§‹åŒ–ä¸º0ï¼Œåœ¨å¾ªçŽ¯ä¸­ä¼šé€’å¢ž
-bOdd			db	0	; å¥‡æ•°è¿˜æ˜¯å¶æ•°FATé¡¹
+wRootDirSizeForLoop	dw	RootDirSectors	; ¸ùÄ¿Â¼ÇøÊ£ÓàÉÈÇøÊý
+										; ³õÊ¼»¯Îª14£¬ÔÚÑ­»·ÖÐ»áµÝ¼õÖÁÁã
+wSectorNo		dw	0	; µ±Ç°ÉÈÇøºÅ£¬³õÊ¼»¯Îª0£¬ÔÚÑ­»·ÖÐ»áµÝÔö
+bOdd			db	0	; ÆæÊý»¹ÊÇÅ¼ÊýFATÏî
 ; -------------------------------------------------------------------
-; å‘½ä»¤è¡Œä¸»å¾ªçŽ¯ä¾‹ç¨‹ç»“æŸ
+; ÃüÁîÐÐÖ÷Ñ­»·Àý³Ì½áÊø
 ; ===================================================================
 
 
 ; ===================================================================
-; å¤§åž‹è¾…åŠ©ä¾‹ç¨‹å¼€å§‹
+; ´óÐÍ¸¨ÖúÀý³Ì¿ªÊ¼
 ;--------------------------------------------------------------------
 
 ;--------------------------------------------------------------------
-; ä¾‹ç¨‹åï¼šGetFATEntry
+; Àý³ÌÃû£ºGetFATEntry
 ;--------------------------------------------------------------------
-; ä½œç”¨ï¼šæ‰¾åˆ°åºå·ä¸ºAXçš„æ‰‡åŒºåœ¨FATä¸­çš„æ¡ç›®ï¼Œç»“æžœæ”¾åœ¨AXä¸­ã€‚éœ€è¦æ³¨æ„çš„
-;     æ˜¯ï¼Œä¸­é—´éœ€è¦è¯»FATçš„æ‰‡åŒºåˆ°ES:BXå¤„ï¼Œæ‰€ä»¥å‡½æ•°ä¸€å¼€å§‹ä¿å­˜äº†ESå’ŒBX
+; ×÷ÓÃ£ºÕÒµ½ÐòºÅÎªAXµÄÉÈÇøÔÚFATÖÐµÄÌõÄ¿£¬½á¹û·ÅÔÚAXÖÐ¡£ÐèÒª×¢ÒâµÄ
+;     ÊÇ£¬ÖÐ¼äÐèÒª¶ÁFATµÄÉÈÇøµ½ES:BX´¦£¬ËùÒÔº¯ÊýÒ»¿ªÊ¼±£´æÁËESºÍBX
 GetFATEntry:
-	push es			; ä¿å­˜ESã€BXå’ŒAXï¼ˆå…¥æ ˆï¼‰
+	push es			; ±£´æES¡¢BXºÍAX£¨ÈëÕ»£©
 	push bx
 	push ax
-; è®¾ç½®è¯»å…¥çš„FATæ‰‡åŒºå†™å…¥çš„åŸºåœ°å€
+; ÉèÖÃ¶ÁÈëµÄFATÉÈÇøÐ´ÈëµÄ»ùµØÖ·
 	mov ax, BaseOfLoader	; AX=4000h
-	sub	ax, 100h	; åœ¨BaseOfLoaderåŽé¢ç•™å‡º4Kç©ºé—´ç”¨äºŽå­˜æ”¾FAT
+	sub	ax, 100h	; ÔÚBaseOfLoaderºóÃæÁô³ö4K¿Õ¼äÓÃÓÚ´æ·ÅFAT
 	mov	es, ax		; ES=8F00h
-; åˆ¤æ–­FATé¡¹çš„å¥‡å¶
-	pop	ax			; å–å‡ºFATé¡¹åºå·ï¼ˆå‡ºæ ˆï¼‰
-	mov	byte [bOdd], 0; åˆå§‹åŒ–å¥‡å¶å˜é‡å€¼ä¸º0ï¼ˆå¶ï¼‰
+; ÅÐ¶ÏFATÏîµÄÆæÅ¼
+	pop	ax			; È¡³öFATÏîÐòºÅ£¨³öÕ»£©
+	mov	byte [bOdd], 0; ³õÊ¼»¯ÆæÅ¼±äÁ¿ÖµÎª0£¨Å¼£©
 	mov	bx, 3		; AX*1.5 = (AX*3)/2
-	mul	bx			; DX:AX = AX * 3ï¼ˆAX*BX çš„ç»“æžœå€¼æ”¾å…¥DX:AXä¸­ï¼‰
-	mov	bx, 2		; BX = 2ï¼ˆé™¤æ•°ï¼‰
+	mul	bx			; DX:AX = AX * 3£¨AX*BX µÄ½á¹ûÖµ·ÅÈëDX:AXÖÐ£©
+	mov	bx, 2		; BX = 2£¨³ýÊý£©
 	xor	dx, dx		; DX=0	
-	div	bx			; DX:AX / 2 => AX <- å•†ã€DX <- ä½™æ•°
-	cmp	dx, 0		; ä½™æ•° = 0ï¼ˆå¶æ•°ï¼‰ï¼Ÿ
-	jz LABEL_EVEN	; å¶æ•°è·³è½¬
-	mov	byte [bOdd], 1	; å¥‡æ•°
-LABEL_EVEN:		; å¶æ•°
-	; çŽ°åœ¨AXä¸­æ˜¯FATé¡¹åœ¨FATä¸­çš„åç§»é‡ï¼Œä¸‹é¢æ¥
-	; è®¡ç®—FATé¡¹åœ¨å“ªä¸ªæ‰‡åŒºä¸­(FATå ç”¨ä¸æ­¢ä¸€ä¸ªæ‰‡åŒº)
+	div	bx			; DX:AX / 2 => AX <- ÉÌ¡¢DX <- ÓàÊý
+	cmp	dx, 0		; ÓàÊý = 0£¨Å¼Êý£©£¿
+	jz LABEL_EVEN	; Å¼ÊýÌø×ª
+	mov	byte [bOdd], 1	; ÆæÊý
+LABEL_EVEN:		; Å¼Êý
+	; ÏÖÔÚAXÖÐÊÇFATÏîÔÚFATÖÐµÄÆ«ÒÆÁ¿£¬ÏÂÃæÀ´
+	; ¼ÆËãFATÏîÔÚÄÄ¸öÉÈÇøÖÐ(FATÕ¼ÓÃ²»Ö¹Ò»¸öÉÈÇø)
 	xor	dx, dx		; DX=0	
 	mov	bx, [BPB_BytsPerSec]	; BX=512
 	div	bx			; DX:AX / 512
-		  			; AX <- å•† (FATé¡¹æ‰€åœ¨çš„æ‰‡åŒºç›¸å¯¹äºŽFATçš„æ‰‡åŒºå·)
-		  			; DX <- ä½™æ•° (FATé¡¹åœ¨æ‰‡åŒºå†…çš„åç§»)
-	push dx			; ä¿å­˜ä½™æ•°ï¼ˆå…¥æ ˆï¼‰
-	mov bx, 0 		; BX <- 0 äºŽæ˜¯ï¼ŒES:BX = 8F00h:0
-	add	ax, SectorNoOfFAT1 ; æ­¤å¥ä¹‹åŽçš„AXå°±æ˜¯FATé¡¹æ‰€åœ¨çš„æ‰‡åŒºå·
-	mov	cl, 2			; è¯»å–FATé¡¹æ‰€åœ¨çš„æ‰‡åŒºï¼Œä¸€æ¬¡è¯»ä¸¤ä¸ªï¼Œé¿å…åœ¨è¾¹ç•Œ
-	call	ReadSec	; å‘ç”Ÿé”™è¯¯, å› ä¸ºä¸€ä¸ª FATé¡¹å¯èƒ½è·¨è¶Šä¸¤ä¸ªæ‰‡åŒº
-	pop	dx			; DX= FATé¡¹åœ¨æ‰‡åŒºå†…çš„åç§»ï¼ˆå‡ºæ ˆï¼‰
-	add	bx, dx		; BX= FATé¡¹åœ¨æ‰‡åŒºå†…çš„åç§»
-	mov	ax, [es:bx]	; AX= FATé¡¹å€¼
-	cmp	byte [bOdd], 1	; æ˜¯å¦ä¸ºå¥‡æ•°é¡¹ï¼Ÿ
-	jnz	LABEL_EVEN_2	; å¶æ•°è·³è½¬
-	shr	ax, 4			; å¥‡æ•°ï¼šå³ç§»4ä½ï¼ˆå–é«˜12ä½ï¼‰
-LABEL_EVEN_2:		; å¶æ•°
-	and	ax, 0FFFh	; å–ä½Ž12ä½
+		  			; AX <- ÉÌ (FATÏîËùÔÚµÄÉÈÇøÏà¶ÔÓÚFATµÄÉÈÇøºÅ)
+		  			; DX <- ÓàÊý (FATÏîÔÚÉÈÇøÄÚµÄÆ«ÒÆ)
+	push dx			; ±£´æÓàÊý£¨ÈëÕ»£©
+	mov bx, 0 		; BX <- 0 ÓÚÊÇ£¬ES:BX = 8F00h:0
+	add	ax, SectorNoOfFAT1 ; ´Ë¾äÖ®ºóµÄAX¾ÍÊÇFATÏîËùÔÚµÄÉÈÇøºÅ
+	mov	cl, 2			; ¶ÁÈ¡FATÏîËùÔÚµÄÉÈÇø£¬Ò»´Î¶ÁÁ½¸ö£¬±ÜÃâÔÚ±ß½ç
+	call	ReadSec	; ·¢Éú´íÎó, ÒòÎªÒ»¸ö FATÏî¿ÉÄÜ¿çÔ½Á½¸öÉÈÇø
+	pop	dx			; DX= FATÏîÔÚÉÈÇøÄÚµÄÆ«ÒÆ£¨³öÕ»£©
+	add	bx, dx		; BX= FATÏîÔÚÉÈÇøÄÚµÄÆ«ÒÆ
+	mov	ax, [es:bx]	; AX= FATÏîÖµ
+	cmp	byte [bOdd], 1	; ÊÇ·ñÎªÆæÊýÏî£¿
+	jnz	LABEL_EVEN_2	; Å¼ÊýÌø×ª
+	shr	ax, 4			; ÆæÊý£ºÓÒÒÆ4Î»£¨È¡¸ß12Î»£©
+LABEL_EVEN_2:		; Å¼Êý
+	and	ax, 0FFFh	; È¡µÍ12Î»
 LABEL_GET_FAT_ENRY_OK:
-	pop	bx			; æ¢å¤ESã€BXï¼ˆå‡ºæ ˆï¼‰
+	pop	bx			; »Ö¸´ES¡¢BX£¨³öÕ»£©
 	pop	es
 	ret
 ;--------------------------------------------------------------------
-
+;ÉèÖÃfat±íÏîÎª×îºó´Ø  getEmptyFatEntry  setEmptyFatEntry
+getEmptyAX dw 2
+getEmptyFatEntry:
 ;--------------------------------------------------------------------
-; ä¾‹ç¨‹åï¼šshowbpb
+; ×÷ÓÃ£ºÕÒµ½¿ÕÏÐ´ØºÅ
+	push es
+	mov ax,2
+	mov word [getEmptyAX],2
+.1
+	call GetFATEntry
+	cmp	ax, 0		; ÊÇ·ñÊÇ¿ÕÏÐ´Ø
+	jz	.FindEmpty ;µÈÓÚÁãÈÏÎªÊÇ¿ÕÏÐ´Ø
+	;call hex2ascii
+	inc word[getEmptyAX]
+	mov ax,[getEmptyAX]
+	jmp .1
+.FindEmpty:
+	mov ax,[getEmptyAX]
+	pop es
+	ret
 ;--------------------------------------------------------------------
-; ä½œç”¨ï¼š; æ˜¾ç¤ºç£ç›˜çš„BPBä¿¡æ¯
+setEmptyAX dw 0
+setEmptyFatEntry:
+;--------------------------------------------------------------------
+; ×÷ÓÃ  ÉèÖÃax¶ÔÓ¦µÄ´ØºÅ±»Õ¼ÓÃ
+	push es			; ±£´æES¡¢BXºÍAX£¨ÈëÕ»£©
+	push bx
+	push ax
+; ÉèÖÃ¶ÁÈëµÄFATÉÈÇøÐ´ÈëµÄ»ùµØÖ·
+	mov ax, BaseOfLoader	; AX=4000h
+	sub	ax, 100h	; ÔÚBaseOfLoaderºóÃæÁô³ö4K¿Õ¼äÓÃÓÚ´æ·ÅFAT
+	mov	es, ax		; ES=8F00h
+; ÅÐ¶ÏFATÏîµÄÆæÅ¼
+	pop	ax			; È¡³öFATÏîÐòºÅ£¨³öÕ»£©
+	mov	byte [bOdd], 0; ³õÊ¼»¯ÆæÅ¼±äÁ¿ÖµÎª0£¨Å¼£©
+	mov	bx, 3		; AX*1.5 = (AX*3)/2
+	mul	bx			; DX:AX = AX * 3£¨AX*BX µÄ½á¹ûÖµ·ÅÈëDX:AXÖÐ£©
+	mov	bx, 2		; BX = 2£¨³ýÊý£©
+	xor	dx, dx		; DX=0	
+	div	bx			; DX:AX / 2 => AX <- ÉÌ¡¢DX <- ÓàÊý
+	cmp	dx, 0		; ÓàÊý = 0£¨Å¼Êý£©£¿
+	jz setEmpty_EVEN	; Å¼ÊýÌø×ª
+	mov	byte [bOdd], 1	; ÆæÊý
+setEmpty_EVEN:		; Å¼Êý
+	; ÏÖÔÚAXÖÐÊÇFATÏîÔÚFATÖÐµÄÆ«ÒÆÁ¿£¬ÏÂÃæÀ´
+	; ¼ÆËãFATÏîÔÚÄÄ¸öÉÈÇøÖÐ(FATÕ¼ÓÃ²»Ö¹Ò»¸öÉÈÇø)
+	xor	dx, dx		; DX=0	
+	mov	bx, [BPB_BytsPerSec]	; BX=512
+	div	bx			; DX:AX / 512
+		  			; AX <- ÉÌ (FATÏîËùÔÚµÄÉÈÇøÏà¶ÔÓÚFATµÄÉÈÇøºÅ)
+		  			; DX <- ÓàÊý (FATÏîÔÚÉÈÇøÄÚµÄÆ«ÒÆ)
+	push dx			; ±£´æÓàÊý£¨ÈëÕ»£©
+	mov bx, 0 		; BX <- 0 ÓÚÊÇ£¬ES:BX = 8F00h:0
+	add	ax, SectorNoOfFAT1 ; ´Ë¾äÖ®ºóµÄAX¾ÍÊÇFATÏîËùÔÚµÄÉÈÇøºÅ
+	mov [setEmptyAX],ax
+	
+	mov	cl, 2			; ¶ÁÈ¡FATÏîËùÔÚµÄÉÈÇø£¬Ò»´Î¶ÁÁ½¸ö£¬±ÜÃâÔÚ±ß½ç
+	call	ReadSec	; ·¢Éú´íÎó, ÒòÎªÒ»¸ö FATÏî¿ÉÄÜ¿çÔ½Á½¸öÉÈÇø
+	pop	dx			; DX= FATÏîÔÚÉÈÇøÄÚµÄÆ«ÒÆ£¨³öÕ»£©
+	add	bx, dx		; BX= FATÏîÔÚÉÈÇøÄÚµÄÆ«ÒÆ
+	mov	ax, [es:bx]	; AX= FATÏîÖµ
+	cmp	byte [bOdd], 1	; ÊÇ·ñÎªÆæÊýÏî£¿
+	jnz	setEmpty_EVEN_2	; Å¼ÊýÌø×ª
+	
+	pusha
+	or	ax, 0FFF0h
+	;shrd bx,ax, 4			; ÆæÊý£ºÓÒÒÆ4Î»£¨È¡¸ß12Î»£©
+	;mov dx,0FFFH
+	;shld dx,bx,4            ;bxÖÐ±£´æµÄÊý¾Ý·Å»Ødx
+	mov	[es:bx],ax
+	;Ð´FAT±í
+	mov ax,[setEmptyAX]
+	mov cl,2
+	mov bx,0
+	call WriteSec	
+	popa
+	jmp setEmpty_GET_FAT_ENRY_OK
+setEmpty_EVEN_2:		; Å¼Êý
+	;and	ax, 0FFFh	; È¡µÍ12Î»
+	pusha
+	or	ax, 0FFFh
+	;shld bx,ax, 4			; Å¼Êý£º×óÒÆ4Î»
+	;mov dx,0FFF0H
+	;shrd dx,bx,4            ;bxÖÐ±£´æµÄÊý¾Ý·Å»Ødx
+	mov	[es:bx],ax
+	;Ð´FAT±í
+	mov ax,[setEmptyAX]
+	mov cl,2
+	mov bx,0
+	call WriteSec	
+	popa
+setEmpty_GET_FAT_ENRY_OK:
+	pop	bx			; »Ö¸´ES¡¢BX£¨³öÕ»£©
+	pop	es
+	ret
+;--------------------------------------------------------------------
+; Àý³ÌÃû£ºshowbpb
+;--------------------------------------------------------------------
+; ×÷ÓÃ£º; ÏÔÊ¾´ÅÅÌµÄBPBÐÅÏ¢
 showbpb:
-	call ReadPBootSec	; è°ƒç”¨è¯»å…¥ç£ç›˜åˆ†åŒºå¼•å¯¼æ‰‡åŒºä¾‹ç¨‹
+	call ReadPBootSec	; µ÷ÓÃ¶ÁÈë´ÅÅÌ·ÖÇøÒýµ¼ÉÈÇøÀý³Ì
 
-	mov word [lns], 0	; å½“å‰å·²æ˜¾ç¤ºè¡Œæ•°ï¼Œåˆå§‹åŒ–ä¸º0
+	mov word [lns], 0	; µ±Ç°ÒÑÏÔÊ¾ÐÐÊý£¬³õÊ¼»¯Îª0
 	
-	; æ˜¾ç¤ºOEMä¸²---------------------------------------------
-	mov cx, OEMMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾OEM´®---------------------------------------------
+	mov cx, OEMMsgLen	; CX=´®³¤
 	mov bp, OEMMsg		; BP="OEM:"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	mov cx, 8			; CX=ä¸²é•¿=8
-	mov bp, Sector + 3	; BP=BPBä¸­çš„OEMä¸²
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call newline		; å›žè½¦æ¢è¡Œ
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+	mov cx, 8			; CX=´®³¤=8
+	mov bp, Sector + 3	; BP=BPBÖÐµÄOEM´®
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call newline		; »Ø³µ»»ÐÐ
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 
-	; æ˜¾ç¤ºä»‹è´¨ä¸²---------------------------------------------
-	mov cx, MediaMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾½éÖÊ´®---------------------------------------------
+	mov cx, MediaMsgLen	; CX=´®³¤
 	mov bp, MediaMsg	; BP="Media:"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	cmp byte [Sector + 15h], 0F0h ; ä»‹è´¨æè¿°ç¬¦ > F0h ?
-	jg HD				; > ä¸ºç¡¬ç›˜
-	; è½¯ç›˜
-	mov cx, FDMsgLen	; CX=è½¯ç›˜çš„ä¸²é•¿
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+	cmp byte [Sector + 15h], 0F0h ; ½éÖÊÃèÊö·û > F0h ?
+	jg HD				; > ÎªÓ²ÅÌ
+	; ÈíÅÌ
+	mov cx, FDMsgLen	; CX=ÈíÅÌµÄ´®³¤
 	mov bp, FDMsg		; BP="Floppy Disk"
-	jmp DStr			; è·³è½¬åˆ°æ˜¾ç¤ºä¸²
-HD: ; ç¡¬ç›˜
-	mov cx, HDMsgLen	; ç¡¬ç›˜çš„ä¸²é•¿=9
+	jmp DStr			; Ìø×ªµ½ÏÔÊ¾´®
+HD: ; Ó²ÅÌ
+	mov cx, HDMsgLen	; Ó²ÅÌµÄ´®³¤=9
 	mov bp, HDMsg		; BP="Hard Disk"
-DStr: ; æ˜¾ç¤ºä¸²
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call newline		; å›žè½¦æ¢è¡Œ
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+DStr: ; ÏÔÊ¾´®
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call newline		; »Ø³µ»»ÐÐ
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 	
-	; æ˜¾ç¤ºç£ç›˜å®¹é‡ --------------------------------------------------------
-	; æ˜¾ç¤ºâ€œSize:â€ä¸²
-	mov cx, SizeMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾´ÅÅÌÈÝÁ¿ --------------------------------------------------------
+	; ÏÔÊ¾¡°Size:¡±´®
+	mov cx, SizeMsgLen	; CX=´®³¤
 	mov bp, SizeMsg		; BP="Size:"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
 
-	; èŽ·å–åè¿›åˆ¶æ•°å­—ä¸²
-	mov ax, [Sector + 13h] ; AX=æ€»æ‰‡åŒºæ•°
-	shr ax, 1			; æ‰‡åŒºæ•°/2 = KBå€¼
-	call GetDigStr		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼ŒBP(ä¸²åœ°å€)å’ŒCX(å­—ç¬¦ä¸ªæ•°)ä¸ºè¿”å›žå€¼
-	; æ˜¾ç¤ºæ•°å­—ä¸²
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
+	; »ñÈ¡Ê®½øÖÆÊý×Ö´®
+	mov ax, [Sector + 13h] ; AX=×ÜÉÈÇøÊý
+	shr ax, 1			; ÉÈÇøÊý/2 = KBÖµ
+	call GetDigStr		; ÒÔAXÎª´«µÝ²ÎÊý£¬BP(´®µØÖ·)ºÍCX(×Ö·û¸öÊý)Îª·µ»ØÖµ
+	; ÏÔÊ¾Êý×Ö´®
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
 	
-	; æ˜¾ç¤ºâ€œKBâ€ä¸²
-	add dl, cl			; åˆ—å·DL += åè¿›åˆ¶æ•°å­—ä¸²çš„å­—ç¬¦ä¸ªæ•°
-	inc dl				; DL++ï¼ˆç©ºä¸€æ ¼ï¼‰
-	mov cx, KBMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾¡°KB¡±´®
+	add dl, cl			; ÁÐºÅDL += Ê®½øÖÆÊý×Ö´®µÄ×Ö·û¸öÊý
+	inc dl				; DL++£¨¿ÕÒ»¸ñ£©
+	mov cx, KBMsgLen	; CX=´®³¤
 	mov bp, KBMsg		; BP="KB"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call newline		; å›žè½¦æ¢è¡Œ
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call newline		; »Ø³µ»»ÐÐ
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 	
-	; æ˜¾ç¤ºæ–‡ä»¶ç³»ç»Ÿç±»åž‹ä¸²---------------------------------------------
-	mov cx, FSMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾ÎÄ¼þÏµÍ³ÀàÐÍ´®---------------------------------------------
+	mov cx, FSMsgLen	; CX=´®³¤
 	mov bp, FSMsg		; BP="File System:"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	mov cx, 8			; CX=ä¸²é•¿=8
-	mov bp, Sector + 36h ; BP=EBPBä¸­çš„æ–‡ä»¶ç³»ç»Ÿç±»åž‹ä¸²
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call newline		; å›žè½¦æ¢è¡Œ
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+	mov cx, 8			; CX=´®³¤=8
+	mov bp, Sector + 36h ; BP=EBPBÖÐµÄÎÄ¼þÏµÍ³ÀàÐÍ´®
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call newline		; »Ø³µ»»ÐÐ
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 	
-	; æ˜¾ç¤ºBPBä¸­çš„å·æ ‡ä¸²---------------------------------------------
-	mov cx, VolMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾BPBÖÐµÄ¾í±ê´®---------------------------------------------
+	mov cx, VolMsgLen	; CX=´®³¤
 	mov bp, VolMsg		; BP="Vol:"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	mov cx, 11			; CX=ä¸²é•¿=11
-	mov bp, Sector + 2Bh ; BP=EBPBä¸­çš„æ–‡ä»¶ç³»ç»Ÿç±»åž‹ä¸²
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call newline		; å›žè½¦æ¢è¡Œ
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+	mov cx, 11			; CX=´®³¤=11
+	mov bp, Sector + 2Bh ; BP=EBPBÖÐµÄÎÄ¼þÏµÍ³ÀàÐÍ´®
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call newline		; »Ø³µ»»ÐÐ
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 	
-	; æ˜¾ç¤ºIDï¼ˆåºåˆ—å·ï¼‰---------------------------------------------
-	mov cx, IDMsgLen	; CX=ä¸²é•¿
+	; ÏÔÊ¾ID£¨ÐòÁÐºÅ£©---------------------------------------------
+	mov cx, IDMsgLen	; CX=´®³¤
 	mov bp, IDMsg		; BP="Vol:"
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	call showid			; æ˜¾ç¤ºIDä¸²
-	call newline		; å›žè½¦æ¢è¡Œ	
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+	call showid			; ÏÔÊ¾ID´®
+	call newline		; »Ø³µ»»ÐÐ	
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 
-	call newline		; å›žè½¦æ¢è¡Œ
-	inc word [lns]		; lns++ å·²æ˜¾ç¤ºè¡Œæ•°+1
+	call newline		; »Ø³µ»»ÐÐ
+	inc word [lns]		; lns++ ÒÑÏÔÊ¾ÐÐÊý+1
 
-	ret					; ç»ˆæ­¢ç¨‹åºï¼Œè¿”å›ž
+	ret					; ÖÕÖ¹³ÌÐò£¬·µ»Ø
 	
-; å®šä¹‰å­—ç¬¦ä¸²å¸¸é‡åŠå…¶é•¿åº¦å€¼ç¬¦å·å¸¸é‡ï¼š	
+; ¶¨Òå×Ö·û´®³£Á¿¼°Æä³¤¶ÈÖµ·ûºÅ³£Á¿£º	
 OEMMsg db "OEM:"
 OEMMsgLen equ $ - OEMMsg
 MediaMsg db "Media:"
@@ -1667,489 +3969,1103 @@ IDMsg db "ID:"
 IDMsgLen equ $ - IDMsg
 
 ; -------------------------------------------------------------------	
-showid: ; æ˜¾ç¤º4Bæ•´æ•°IDå€¼çš„åå…­è¿›åˆ¶ä¸²
+showid: ; ÏÔÊ¾4BÕûÊýIDÖµµÄÊ®Áù½øÖÆ´®
 
 	mov edx, [Sector + 27h] ; EDX = ID
-	bswap edx		; å­—èŠ‚ååº
+	bswap edx		; ×Ö½Ú·´Ðò
 
-	mov cx, 4		; å¾ªçŽ¯æ¬¡æ•°
-.1: ; æ˜¾ç¤ºå•ä¸ªå­—èŠ‚
-	; æ˜¾ç¤ºé«˜4ä½
-	mov al, dl		; AL=IDé«˜ä½å­—èŠ‚
-	and al, 0F0h	; å–å‡ºé«˜4ä½
+	mov cx, 4		; Ñ­»·´ÎÊý
+.1: ; ÏÔÊ¾µ¥¸ö×Ö½Ú
+	; ÏÔÊ¾¸ß4Î»
+	mov al, dl		; AL=ID¸ßÎ»×Ö½Ú
+	and al, 0F0h	; È¡³ö¸ß4Î»
 	shr al, 4		; AL >> 4
-	call ShowChar	; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦å‡½æ•°
-	; æ˜¾ç¤ºä½Ž4ä½
-	mov al, dl		; AL=IDé«˜ä½å­—èŠ‚
-	and al, 0Fh		; å–å‡ºä½Ž4ä½
-	call ShowChar	; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦å‡½æ•°
-	; ä¸‹ä¸€ä¸ªå­—èŠ‚
+	call ShowChar	; µ÷ÓÃÏÔÊ¾×Ö·ûº¯Êý
+	; ÏÔÊ¾µÍ4Î»
+	mov al, dl		; AL=ID¸ßÎ»×Ö½Ú
+	and al, 0Fh		; È¡³öµÍ4Î»
+	call ShowChar	; µ÷ÓÃÏÔÊ¾×Ö·ûº¯Êý
+	; ÏÂÒ»¸ö×Ö½Ú
 	shr edx, 8		; EDX >> 8
 	cmp cx, 3		; CX = 3 ?
-	jne .2			; ï¼= ç»§ç»­å¾ªçŽ¯
-	; æ˜¾ç¤ºå‡å·ç¬¦'-'
-	mov al,'-'		; AL = ç©ºæ ¼ç¬¦
-	mov ah,0Eh 		; åŠŸèƒ½å·ï¼ˆä»¥ç”µä¼ æ–¹å¼æ˜¾ç¤ºå•ä¸ªå­—ç¬¦ï¼‰
-	mov bl,0 		; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
+	jne .2			; £¡= ¼ÌÐøÑ­»·
+	; ÏÔÊ¾¼õºÅ·û'-'
+	mov al,'-'		; AL = ¿Õ¸ñ·û
+	mov ah,0Eh 		; ¹¦ÄÜºÅ£¨ÒÔµç´«·½Ê½ÏÔÊ¾µ¥¸ö×Ö·û£©
+	mov bl,0fh 		; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
 .2:
-	loop .1			; å¾ªçŽ¯
+	loop .1			; Ñ­»·
 
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	ret				; ´ÓÀý³Ì·µ»Ø
 ; -------------------------------------------------------------------	
 
 ; -------------------------------------------------------------------	
-; æ˜¾ç¤ºå•ä¸ªåå…­è¿›åˆ¶å­—ç¬¦å‡½æ•°
-ShowChar: ; æ˜¾ç¤ºä¸€ä¸ªåå…­è¿›åˆ¶æ•°å­—ç¬¦ï¼š0~9ã€A~Fï¼ˆä»¥ALä¸ºä¼ é€’å‚æ•°ï¼‰
+; ÏÔÊ¾µ¥¸öÊ®Áù½øÖÆ×Ö·ûº¯Êý
+ShowChar: ; ÏÔÊ¾Ò»¸öÊ®Áù½øÖÆÊý×Ö·û£º0~9¡¢A~F£¨ÒÔALÎª´«µÝ²ÎÊý£©
 	cmp al, 10		; AL < 10 ?
-	jl .1			; AL < 10ï¼šè·³è½¬åˆ°.1
-	add al, 7		; AL >= 10ï¼šæ˜¾ç¤ºå­—æ¯ï¼ˆ = æ•°å€¼ += 37hï¼‰
-.1: ; æ•°å­—
-	add al, 30h		; æ•°å­—å­—ç¬¦ = æ•°å€¼+=30h
-	mov ah, 0Eh		; åŠŸèƒ½å·ï¼ˆä»¥ç”µä¼ æ–¹å¼æ˜¾ç¤ºå•ä¸ªå­—ç¬¦ï¼‰
-	mov bl, 0 		; å¯¹æ–‡æœ¬æ–¹å¼ç½®0
-	int 10h 		; è°ƒç”¨10Hå·ä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	jl .1			; AL < 10£ºÌø×ªµ½.1
+	add al, 7		; AL >= 10£ºÏÔÊ¾×ÖÄ¸£¨ = ÊýÖµ += 37h£©
+.1: ; Êý×Ö
+	add al, 30h		; Êý×Ö×Ö·û = ÊýÖµ+=30h
+	mov ah, 0Eh		; ¹¦ÄÜºÅ£¨ÒÔµç´«·½Ê½ÏÔÊ¾µ¥¸ö×Ö·û£©
+	mov bl, 0fh 	; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
 ; -------------------------------------------------------------------	
 
 ; --------------------------------------------------------------------
-ReadPBootSec: ; è¯»å…¥ç£ç›˜çš„åˆ†åŒºå¼•å¯¼æ‰‡åŒºåˆ°Sectorå¤„
-	mov bx, Sector 	; ES:BX=è¯»å…¥æ•°æ®åˆ°å†…å­˜ä¸­çš„å­˜å‚¨åœ°å€
-	mov ah, 2 		; åŠŸèƒ½å·
-	mov al, 1 		; è¦è¯»å…¥çš„æ‰‡åŒºæ•°
-	mov dl, [drvno]	; ç£ç›˜é©±åŠ¨å™¨å·ï¼š0=è½¯ç›˜Aã€1=è½¯ç›˜Bã€80h=ç¡¬ç›˜Cã€81h=ç¡¬ç›˜D
-	mov dh, 0 		; ç£å¤´å·
-	mov ch, 0 		; æŸ±é¢å·ï¼ˆè½¯ç›˜=0ã€ç¡¬ç›˜=1ï¼‰
-	cmp byte[drvno], 1 ; é©±åŠ¨å™¨å· > 1 ? 
-	jbe	.1			; <= 1 æ—¶ä¸ºè½¯ç›˜ï¼ŒæŸ±é¢å·CH=0
-	mov ch, 1		; > 1 æ—¶ä¸ºç¡¬ç›˜ï¼ŒæŸ±é¢å·CH=1
+ReadPBootSec: ; ¶ÁÈë´ÅÅÌµÄ·ÖÇøÒýµ¼ÉÈÇøµ½Sector´¦
+	mov bx, Sector 	; ES:BX=¶ÁÈëÊý¾Ýµ½ÄÚ´æÖÐµÄ´æ´¢µØÖ·
+	mov ah, 2 		; ¹¦ÄÜºÅ
+	mov al, 1 		; Òª¶ÁÈëµÄÉÈÇøÊý
+	mov dl, [drvno]	; ´ÅÅÌÇý¶¯Æ÷ºÅ£º0=ÈíÅÌA¡¢1=ÈíÅÌB¡¢80h=Ó²ÅÌC¡¢81h=Ó²ÅÌD
+	mov dh, 0 		; ´ÅÍ·ºÅ
+	mov ch, 0 		; ÖùÃæºÅ£¨ÈíÅÌ=0¡¢Ó²ÅÌ=1£©
+	cmp byte[drvno], 1 ; Çý¶¯Æ÷ºÅ > 1 ? 
+	jbe	.1			; <= 1 Ê±ÎªÈíÅÌ£¬ÖùÃæºÅCH=0
+	mov ch, 1		; > 1 Ê±ÎªÓ²ÅÌ£¬ÖùÃæºÅCH=1
 .1:
-	mov cl, 1 		; èµ·å§‹æ‰‡åŒºå·ï¼ˆç¼–å·ä»Ž1å¼€å§‹ï¼‰
-	int 13H 		; è°ƒç”¨13Hå·ä¸­æ–­
-	ret 			; ä»Žä¾‹ç¨‹è¿”å›ž
-; å®šä¹‰ç¼“å†²åŒºï¼Œç”¨äºŽå­˜æ”¾ä»Žç£ç›˜è¯»å…¥çš„æ‰‡åŒº
+	mov cl, 1 		; ÆðÊ¼ÉÈÇøºÅ£¨±àºÅ´Ó1¿ªÊ¼£©
+	int 13H 		; µ÷ÓÃ13HºÅÖÐ¶Ï
+	ret 			; ´ÓÀý³Ì·µ»Ø
+; ¶¨Òå»º³åÇø£¬ÓÃÓÚ´æ·Å´Ó´ÅÅÌ¶ÁÈëµÄÉÈÇø
 Sector:
 	resb 512
 
 ; --------------------------------------------------------------------
-DispStr: ; æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹ï¼ˆéœ€å…ˆç½®ä¸²é•¿CXå’Œä¸²åœ°å€BPï¼‰
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	push cx			; ä¿æŠ¤CXï¼ˆè¿›æ ˆï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	pop cx			; æ¢å¤CXï¼ˆå‡ºæ ˆï¼‰
+DispStr: ; ÏÔÊ¾×Ö·û´®Àý³Ì£¨ÐèÏÈÖÃ´®³¤CXºÍ´®µØÖ·BP£©
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	push cx			; ±£»¤CX£¨½øÕ»£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	pop cx			; »Ö¸´CX£¨³öÕ»£©
 
-	; åœ¨å½“å‰ä½ç½®æ˜¾ç¤ºå­—ç¬¦ä¸²ï¼ˆä¸²é•¿CXå’Œä¸²åœ°å€BPå·²é¢„å…ˆè®¾ç½®å¥½äº†ï¼‰
-	mov ah, 13h		; BIOSä¸­æ–­çš„åŠŸèƒ½å·ï¼ˆæ˜¾ç¤ºå­—ç¬¦ä¸²ï¼‰
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bh, 0 		; é¡µå·=0
-	mov bl, 0fh		; å­—ç¬¦é¢œè‰²=ä¸é—ªï¼ˆ0ï¼‰é»‘åº•ï¼ˆ000ï¼‰äº®ç™½å­—ï¼ˆ1111ï¼‰
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	; ÔÚµ±Ç°Î»ÖÃÏÔÊ¾×Ö·û´®£¨´®³¤CXºÍ´®µØÖ·BPÒÑÔ¤ÏÈÉèÖÃºÃÁË£©
+	mov ah, 13h		; BIOSÖÐ¶ÏµÄ¹¦ÄÜºÅ£¨ÏÔÊ¾×Ö·û´®£©
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bh, 0 		; Ò³ºÅ=0
+	mov bl, 0fh		; ×Ö·ûÑÕÉ«=²»ÉÁ£¨0£©ºÚµ×£¨000£©ÁÁ°××Ö£¨1111£©
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	ret				; ´ÓÀý³Ì·µ»Ø
 	
 ; --------------------------------------------------------------------
-; èŽ·å–å­—æ•°æ®å€¼åè¿›åˆ¶ä¸²ä¾‹ç¨‹
-dn equ 5 ; æœ€å¤§ä½æ•°
-GetDigStr: ; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	mov cx, 1		; ä½æ•°=1ï¼ˆåˆå€¼ï¼‰
-	mov bp, sbuf	; BP = sbuf + dn - 1 = sbufçš„å½“å‰ä½ç½®
+; »ñÈ¡×ÖÊý¾ÝÖµÊ®½øÖÆ´®Àý³Ì
+dn equ 5 ; ×î´óÎ»Êý
+GetDigStr: ; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	mov cx, 1		; Î»Êý=1£¨³õÖµ£©
+	mov bp, sbuf	; BP = sbuf + dn - 1 = sbufµÄµ±Ç°Î»ÖÃ
 	add bp, dn - 1
-	mov bx,10		; é™¤æ•°=10
-DLoop: ; å¾ªçŽ¯å¼€å§‹å¤„
-	mov dx, 0		; DX=0, DX:AX / BX -> å•†AXã€ä½™DX
+	mov bx,10		; ³ýÊý=10
+DLoop: ; Ñ­»·¿ªÊ¼´¦
+	mov dx, 0		; DX=0, DX:AX / BX -> ÉÌAX¡¢ÓàDX
 	div bx
-	add dl, 30h		; ä½™æ•° + 30h = å¯¹åº”çš„æ•°å­—ç¬¦ASCIIç 
+	add dl, 30h		; ÓàÊý + 30h = ¶ÔÓ¦µÄÊý×Ö·ûASCIIÂë
 	mov [bp], dl	; sbuf[BP] = DL
-	cmp ax, 0		; å•†AX = 0 ?
-	je OutLoop		; = 0 è·³å‡ºå¾ªçŽ¯
-	inc cx			; ä½æ•°CX++
-	dec bp			; æ•°å­—ç¬¦çš„å½“å‰ä½ç½®BP--
-	jmp DLoop		; ç»§ç»­å¾ªçŽ¯
-OutLoop: ; é€€å‡ºå¾ªçŽ¯
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	cmp ax, 0		; ÉÌAX = 0 ?
+	je OutLoop		; = 0 Ìø³öÑ­»·
+	inc cx			; Î»ÊýCX++
+	dec bp			; Êý×Ö·ûµÄµ±Ç°Î»ÖÃBP--
+	jmp DLoop		; ¼ÌÐøÑ­»·
+OutLoop: ; ÍË³öÑ­»·
+	ret				; ´ÓÀý³Ì·µ»Ø
 
-sbuf: resb dn ; ç”¨äºŽå­˜æ”¾åè¿›åˆ¶æ•°å­—ä¸²çš„ç¼“å†²åŒºï¼Œå¤§å° = å¸¸é‡dnï¼ˆ=5ï¼‰
+sbuf: resb dn ; ÓÃÓÚ´æ·ÅÊ®½øÖÆÊý×Ö´®µÄ»º³åÇø£¬´óÐ¡ = ³£Á¿dn£¨=5£©
 
 
 ;--------------------------------------------------------------------
-; ä¾‹ç¨‹åï¼šReadSec
+; Àý³ÌÃû£ºReadSec
 ;--------------------------------------------------------------------
-; ä½œç”¨ï¼šä»Žç¬¬ AXä¸ªæ‰‡åŒºå¼€å§‹ï¼Œå°†CLä¸ªæ‰‡åŒºè¯»å…¥ES:BXä¸­
-; éœ€ä½¿ç”¨ç£ç›˜å‚æ•°secspt(æ¯ç£é“æ‰‡åŒºæ•°ï¼‰å’Œheads(ç£å¤´æ•°ï¼‰
+; ×÷ÓÃ£º´ÓµÚ AX¸öÉÈÇø¿ªÊ¼£¬½«CL¸öÉÈÇø¶ÁÈëES:BXÖÐ
+; ÐèÊ¹ÓÃ´ÅÅÌ²ÎÊýsecspt(Ã¿´ÅµÀÉÈÇøÊý£©ºÍheads(´ÅÍ·Êý£©
 ReadSec:
 	; ---------------------------------------------------------------
-	; æ€Žæ ·ç”±æ‰‡åŒºå·æ±‚æ‰‡åŒºåœ¨ç£ç›˜ä¸­çš„ä½ç½® (æ‰‡åŒºå·->æŸ±é¢å·ã€èµ·å§‹æ‰‡åŒºã€ç£å¤´å·)
+	; ÔõÑùÓÉÉÈÇøºÅÇóÉÈÇøÔÚ´ÅÅÌÖÐµÄÎ»ÖÃ (ÉÈÇøºÅ->ÖùÃæºÅ¡¢ÆðÊ¼ÉÈÇø¡¢´ÅÍ·ºÅ)
 	; ---------------------------------------------------------------
-	; è®¾æ‰‡åŒºå·ä¸º xï¼ˆ= AXï¼‰
-	;                             â”Œ æŸ±é¢å·C = y / ç£å¤´æ•°
-	;         x            â”Œ å•† y â”¤
-	;   -------------- 	=> â”¤      â”” ç£å¤´å·H = y % ç£å¤´æ•°
-	;    æ¯ç£é“æ‰‡åŒºæ•°      â”‚
-	;                      â”” ä½™ z => èµ·å§‹æ‰‡åŒºå·S = z + 1
-	push cx			; ä¿å­˜è¦è¯»çš„æ‰‡åŒºæ•°CL
-	push bx			; ä¿å­˜BX
-	mov	bl, [secspt]; BL(= ç£é“æ‰‡åŒºæ•°ï¼‰ä¸ºé™¤æ•°
-	div	bl			; AX/BLï¼Œå•†yåœ¨ALä¸­ã€ä½™æ•°zåœ¨AHä¸­
-	inc	ah			; z ++ï¼ˆå› ç£ç›˜çš„èµ·å§‹æ‰‡åŒºå·ä¸º1ï¼‰ï¼ŒAH = èµ·å§‹æ‰‡åŒºå·
-	mov	cl, ah		; CL <- èµ·å§‹æ‰‡åŒºå·S
+	; ÉèÉÈÇøºÅÎª x£¨= AX£©
+	;                             ©° ÖùÃæºÅC = y / ´ÅÍ·Êý
+	;         x            ©° ÉÌ y ©È
+	;   -------------- 	=> ©È      ©¸ ´ÅÍ·ºÅH = y % ´ÅÍ·Êý
+	;    Ã¿´ÅµÀÉÈÇøÊý      ©¦
+	;                      ©¸ Óà z => ÆðÊ¼ÉÈÇøºÅS = z + 1
+	push es
+	push cx			; ±£´æÒª¶ÁµÄÉÈÇøÊýCL
+	push bx			; ±£´æBX
+	mov	bl, [secspt]; BL(= ´ÅµÀÉÈÇøÊý£©Îª³ýÊý
+	div	bl			; AX/BL£¬ÉÌyÔÚALÖÐ¡¢ÓàÊýzÔÚAHÖÐ
+	inc	ah			; z ++£¨Òò´ÅÅÌµÄÆðÊ¼ÉÈÇøºÅÎª1£©£¬AH = ÆðÊ¼ÉÈÇøºÅ
+	mov	cl, ah		; CL <- ÆðÊ¼ÉÈÇøºÅS
 	mov	ah, 0		; AX <- y
-	mov bl, [heads]	; BL(= ç£å¤´æ•°ï¼‰ä¸ºé™¤æ•°
-	div	bl			; AX/BLï¼Œå•†åœ¨ALä¸­ã€ä½™æ•°åœ¨AHä¸­
-	mov	ch, al		; CH <- æŸ±é¢å·C
-	mov	dh, ah		; DH <- ç£å¤´å·H
-	; è‡³æ­¤ï¼Œ"æŸ±é¢å·ã€èµ·å§‹æ‰‡åŒºã€ç£å¤´å·"å·²å…¨éƒ¨å¾—åˆ°
-	pop	bx			; æ¢å¤BX
-	pop ax			; AL = æ¢å¤çš„è¦è¯»çš„æ‰‡åŒºæ•°CL
-	mov	dl, [drvno]	; é©±åŠ¨å™¨å·
-.1: ; ä½¿ç”¨ç£ç›˜ä¸­æ–­è¯»å…¥æ‰‡åŒº
-	mov	ah, 2		; åŠŸèƒ½å·ï¼ˆè¯»æ‰‡åŒºï¼‰
-	int	13h			; ç£ç›˜ä¸­æ–­
-	jc .1			; å¦‚æžœè¯»å–é”™è¯¯ï¼ŒCFä¼šè¢«ç½®ä¸º1ï¼Œè¿™æ—¶å°±ä¸åœåœ°è¯»ï¼Œç›´åˆ°æ­£ç¡®ä¸ºæ­¢
+	mov bl, [heads]	; BL(= ´ÅÍ·Êý£©Îª³ýÊý
+	div	bl			; AX/BL£¬ÉÌÔÚALÖÐ¡¢ÓàÊýÔÚAHÖÐ
+	mov	ch, al		; CH <- ÖùÃæºÅC
+	mov	dh, ah		; DH <- ´ÅÍ·ºÅH
+	; ÖÁ´Ë£¬"ÖùÃæºÅ¡¢ÆðÊ¼ÉÈÇø¡¢´ÅÍ·ºÅ"ÒÑÈ«²¿µÃµ½
+	pop	bx			; »Ö¸´BX
+	pop ax			; AL = »Ö¸´µÄÒª¶ÁµÄÉÈÇøÊýCL
+	mov	dl, [drvno]	; Çý¶¯Æ÷ºÅ
+.1: ; Ê¹ÓÃ´ÅÅÌÖÐ¶Ï¶ÁÈëÉÈÇø
+	mov	ah, 2		; ¹¦ÄÜºÅ£¨¶ÁÉÈÇø£©
+	int	13h			; ´ÅÅÌÖÐ¶Ï
+	jc .1			; Èç¹û¶ÁÈ¡´íÎó£¬CF»á±»ÖÃÎª1£¬ÕâÊ±¾Í²»Í£µØ¶Á£¬Ö±µ½ÕýÈ·ÎªÖ¹
+	pop es
 	ret
 ;--------------------------------------------------------------------
-
+; Àý³ÌÃû£ºWriteSec
 ;--------------------------------------------------------------------
-; ä¾‹ç¨‹åï¼šls
+; ×÷ÓÃ£º´ÓµÚ AX¸öÉÈÇø¿ªÊ¼£¬½«ES:BXÖÐ Ð´µ½CL¸öÉÈÇøÖÐ
+; ÐèÊ¹ÓÃ´ÅÅÌ²ÎÊýsecspt(Ã¿´ÅµÀÉÈÇøÊý£©ºÍheads(´ÅÍ·Êý£©
+WriteSec:
+	; ---------------------------------------------------------------
+	; ÔõÑùÓÉÉÈÇøºÅÇóÉÈÇøÔÚ´ÅÅÌÖÐµÄÎ»ÖÃ (ÉÈÇøºÅ->ÖùÃæºÅ¡¢ÆðÊ¼ÉÈÇø¡¢´ÅÍ·ºÅ)
+	; ---------------------------------------------------------------
+	; ÉèÉÈÇøºÅÎª x£¨= AX£©
+	;                             ©° ÖùÃæºÅC = y / ´ÅÍ·Êý
+	;         x            ©° ÉÌ y ©È
+	;   -------------- 	=> ©È      ©¸ ´ÅÍ·ºÅH = y % ´ÅÍ·Êý
+	;    Ã¿´ÅµÀÉÈÇøÊý      ©¦
+	;                      ©¸ Óà z => ÆðÊ¼ÉÈÇøºÅS = z + 1
+	push es
+	push cx			; ±£´æÒª¶ÁµÄÉÈÇøÊýCL
+	push bx			; ±£´æBX
+	mov	bl, [secspt]; BL(= ´ÅµÀÉÈÇøÊý£©Îª³ýÊý
+	div	bl			; AX/BL£¬ÉÌyÔÚALÖÐ¡¢ÓàÊýzÔÚAHÖÐ
+	inc	ah			; z ++£¨Òò´ÅÅÌµÄÆðÊ¼ÉÈÇøºÅÎª1£©£¬AH = ÆðÊ¼ÉÈÇøºÅ
+	mov	cl, ah		; CL <- ÆðÊ¼ÉÈÇøºÅS
+	mov	ah, 0		; AX <- y
+	mov bl, [heads]	; BL(= ´ÅÍ·Êý£©Îª³ýÊý
+	div	bl			; AX/BL£¬ÉÌÔÚALÖÐ¡¢ÓàÊýÔÚAHÖÐ
+	mov	ch, al		; CH <- ÖùÃæºÅC
+	mov	dh, ah		; DH <- ´ÅÍ·ºÅH
+	; ÖÁ´Ë£¬"ÖùÃæºÅ¡¢ÆðÊ¼ÉÈÇø¡¢´ÅÍ·ºÅ"ÒÑÈ«²¿µÃµ½
+	pop	bx			; »Ö¸´BX
+	pop ax			; AL = »Ö¸´µÄÒª¶ÁµÄÉÈÇøÊýCL
+	mov	dl, [drvno]	; Çý¶¯Æ÷ºÅ
+.1: ; Ê¹ÓÃ´ÅÅÌÖÐ¶Ï¶ÁÈëÉÈÇø
+	mov	ah, 3		; ¹¦ÄÜºÅ Ð´ÉÈÇø
+	int	13h			; ´ÅÅÌÖÐ¶Ï
+	jc .1			; Èç¹û¶ÁÈ¡´íÎó£¬CF»á±»ÖÃÎª1£¬ÕâÊ±¾Í²»Í£µØ¶Á£¬Ö±µ½ÕýÈ·ÎªÖ¹
+	pop es
+	ret
 ;--------------------------------------------------------------------
-; ä½œç”¨ï¼š; æ˜¾ç¤ºç£ç›˜æ ¹ç›®å½•æ–‡ä»¶ä¿¡æ¯åˆ—è¡¨
-; éœ€ä½¿ç”¨ç£ç›˜å‚æ•°secspt(æ¯ç£é“æ‰‡åŒºæ•°ï¼‰å’Œheads(ç£å¤´æ•°ï¼‰
+;--------------------------------------------------------------------
+; Àý³ÌÃû£ºls        
+;×ÓÄ¿Â¼×÷³öÐÞ¸Ä(×ÓÄ¿Â¼ºÍÎÄ¼þÒ»Ñù£¬¼«ÓÐ¿ÉÄÜ²»Á¬Ðø£¬Ô­À´µÄËã·¨²»¿É¿¿£¬ÒªÈ¥²éfatÏîÔÙ¼ÆËãÏÂÒ»ÉÈÇøÎ»ÖÃ)
+;--------------------------------------------------------------------
+; ×÷ÓÃ£º; ÏÔÊ¾´ÅÅÌ¸ùÄ¿Â¼ÎÄ¼þÐÅÏ¢ÁÐ±í
+; ÐèÊ¹ÓÃ´ÅÅÌ²ÎÊýsecspt(Ã¿´ÅµÀÉÈÇøÊý£©ºÍheads(´ÅÍ·Êý£©
 ls: 
 	;mov word[nsec],1
 	;mov word[isec],1fh
 	;add word[isec], 47h			
 	
-	;call getdiskparam	; èŽ·å–ç£ç›˜å‚æ•°H&S
-	; èŽ·å–ç£ç›˜å‚æ•°H/S
-	;mov ax, [Sector + 18h]	; AX = æ¯ç£é“æ‰‡åŒºæ•°
-	;mov [secspt], ax		; secspt = AX = æ¯ç£é“æ‰‡åŒºæ•°
-	;mov ax, [Sector + 1Ah]	; AX = ç£å¤´æ•°
-	;mov [heads], ax			; heads = AX = ç£å¤´æ•°
-	; å¯¹ç¡¬ç›˜isecéœ€åŠ ç¬¬1ä¸ªæŸ±é¢çš„æ‰‡åŒºæ•°
+	;call getdiskparam	; »ñÈ¡´ÅÅÌ²ÎÊýH&S
+	; »ñÈ¡´ÅÅÌ²ÎÊýH/S
+	;mov ax, [Sector + 18h]	; AX = Ã¿´ÅµÀÉÈÇøÊý
+	;mov [secspt], ax		; secspt = AX = Ã¿´ÅµÀÉÈÇøÊý
+	;mov ax, [Sector + 1Ah]	; AX = ´ÅÍ·Êý
+	;mov [heads], ax			; heads = AX = ´ÅÍ·Êý
+	; ¶ÔÓ²ÅÌisecÐè¼ÓµÚ1¸öÖùÃæµÄÉÈÇøÊý
 	mov ax,[isec]
 	mov [isec_ls],ax
 	mov ax,[nsec]
 	mov [nsec_ls],ax
-	cmp byte [drvno], 80h	; é©±åŠ¨å™¨å·=80hï¼ˆç¡¬ç›˜Cï¼‰ï¼Ÿ
-	je hdc					; = 80h è·³è½¬
-	jmp begain				; è½¯ç›˜
-hdc: ; ç¡¬ç›˜C
-	; è®¡ç®—åˆ†åŒºå‰çš„æ‰‡åŒºæ•°ï¼ˆå‡è®¾ = 1ä¸ªæŸ±é¢æ‰‡åŒºæ•°ï¼‰= æ¯ç£é“æ‰‡åŒºæ•° * ç£å¤´æ•°
-	mov ax, [secspt] 		; AX = æ¯ç£é“æ‰‡åŒºæ•°
-	mul word [heads]		; AX *= ç£å¤´æ•° = 1ä¸ªæŸ±é¢æ‰‡åŒºæ•°
-	add [isec_ls], ax			; isec += 1ä¸ªæŸ±é¢æ‰‡åŒºæ•° = ç¡¬ç›˜æ ¹ç›®å½•é¦–æ‰‡åŒºå·
+	cmp byte [drvno], 80h	; Çý¶¯Æ÷ºÅ=80h£¨Ó²ÅÌC£©£¿
+	je hdc					; = 80h Ìø×ª
+	jmp begain				; ÈíÅÌ
+hdc: ; Ó²ÅÌC
+	; ¼ÆËã·ÖÇøÇ°µÄÉÈÇøÊý£¨¼ÙÉè = 1¸öÖùÃæÉÈÇøÊý£©= Ã¿´ÅµÀÉÈÇøÊý * ´ÅÍ·Êý
+	mov ax, [secspt] 		; AX = Ã¿´ÅµÀÉÈÇøÊý
+	mul word [heads]		; AX *= ´ÅÍ·Êý = 1¸öÖùÃæÉÈÇøÊý
+	add [isec_ls], ax			; isec += 1¸öÖùÃæÉÈÇøÊý = Ó²ÅÌ¸ùÄ¿Â¼Ê×ÉÈÇøºÅ
 
 begain: 
-	; ä¸‹é¢åœ¨ç£ç›˜æ ¹ç›®å½•ä¸­å¯»æ‰¾æ–‡ä»¶ç›®å½•æ¡ç›®
-searchrdir: ; æœç´¢æ ¹ç›®å½•å¾ªçŽ¯ï¼ˆé€ä¸ªè¯»å…¥æ ¹ç›®å½•æ‰‡åŒºï¼‰
-	cmp	word [nsec_ls], 0	; åˆ¤æ–­æ ¹ç›®å½•åŒºæ˜¯å¦å·²è¯»å®Œ
-	jz	exit			; è‹¥è¯»å®Œåˆ™é€€å‡º
+	; ÏÂÃæÔÚ´ÅÅÌµ±Ç°Ä¿Â¼ÖÐÑ°ÕÒÎÄ¼þÄ¿Â¼ÌõÄ¿
+searchrdir: ; ËÑË÷µ±Ç°Ä¿Â¼Ñ­»·£¨Öð¸ö¶ÁÈë¸ùÄ¿Â¼ÉÈÇø£©
+	cmp	word [nsec_ls], 0	; ÅÐ¶Ï¸ùÄ¿Â¼ÇøÊÇ·ñÒÑ¶ÁÍê
+	jz	exit			; Èô¶ÁÍêÔòÍË³ö
 	dec	word [nsec_ls]		; nsec--
-	; è°ƒç”¨è¯»æ‰‡åŒºå‡½æ•°è¯»å…¥ä¸€ä¸ªæ ¹ç›®å½•æ‰‡åŒºåˆ°ç¼“å†²åŒº
+	; µ÷ÓÃ¶ÁÉÈÇøº¯Êý¶ÁÈëÒ»¸öÄ¿Â¼ÉÈÇøµ½»º³åÇø
 	mov	bx, Sector		; BX = Sector
-	mov	ax, [isec_ls]		; AX <- æ ¹ç›®å½•ä¸­çš„å½“å‰æ‰‡åŒºå·
-	mov cl, 1			; è¯»ä¸€ä¸ªæ‰‡åŒºåˆ°ç¼“å†²åŒº
-	call ReadSec		; è°ƒç”¨è¯»æ‰‡åŒºå‡½æ•°
+	mov	ax, [isec_ls]		; AX <- µ±Ç°Ä¿Â¼ÖÐµÄµ±Ç°ÉÈÇøºÅ
+	mov cl, 1			; ¶ÁÒ»¸öÉÈÇøµ½»º³åÇø
+	call ReadSec		; µ÷ÓÃ¶ÁÉÈÇøº¯Êý
 	
 	mov	di, Sector		; ES:DI -> Sector	
-	mov	word [i], 10h	; å¾ªçŽ¯æ¬¡æ•°=16ï¼ˆæ¯ä¸ªæ‰‡åŒºæœ‰16ä¸ªæ–‡ä»¶æ¡ç›®ï¼š512/32=16ï¼‰
-searchfi: ; æœç´¢æ–‡ä»¶é¡¹å¾ªçŽ¯ï¼ˆåœ¨å½“å‰æ‰‡åŒºä¸­é€ä¸ªæ£€æŸ¥æ–‡ä»¶ç›®å½•é¡¹ï¼‰
-	cmp	word [i], 0		; å¾ªçŽ¯æ¬¡æ•°æŽ§åˆ¶
-	jz nextsec 			; è‹¥å·²è¯»å®Œä¸€æ‰‡åŒºï¼Œè·³åˆ°ä¸‹ä¸€æ‰‡åŒº
-	dec	word [i]		; é€’å‡å¾ªçŽ¯æ¬¡æ•°å€¼
-	; åˆ¤æ–­æ˜¯å¦ä¸ºæ–‡ä»¶æ¡ç›®ï¼ˆ0å¼€å§‹çš„ä¸ºç©ºé¡¹ã€E5hå¼€å§‹çš„ä¸ºå·²åˆ é¡¹ã€å±žæ€§ä½Ž4ä½å…¨1çš„
-	; ä¸ºé•¿æ–‡ä»¶åé¡¹æˆ–ç³»ç»Ÿå ç”¨é¡¹ã€å·æ ‡é¡¹çš„å±žæ€§3å·ä½ä¸º1ï¼‰
-	cmp	byte [di], 0	; æ–‡ä»¶åçš„é¦–å­—æ¯=0ï¼Ÿ
-	jz	notfi			; ä¸ºç©ºç›®å½•é¡¹
-	cmp	byte [di], 0E5h	; æ–‡ä»¶åçš„é¦–å­—æ¯=E5ï¼Ÿ
-	jz	notfi 			; ä¸ºå·²åˆ é™¤ç›®å½•é¡¹
-	cmp	byte [di + 11], 0Fh; æ–‡ä»¶å±žæ€§=0Fhï¼Ÿ
-	jz	notfi 			; ä¸ºé•¿æ–‡ä»¶åç›®å½•é¡¹
+	mov	word [i], 10h	; Ñ­»·´ÎÊý=16£¨Ã¿¸öÉÈÇøÓÐ16¸öÎÄ¼þÌõÄ¿£º512/32=16£©
+searchfi: ; ËÑË÷ÎÄ¼þÏîÑ­»·£¨ÔÚµ±Ç°ÉÈÇøÖÐÖð¸ö¼ì²éÎÄ¼þÄ¿Â¼Ïî£©
+	cmp	word [i], 0		; Ñ­»·´ÎÊý¿ØÖÆ
+	jz nextsec 			; ÈôÒÑ¶ÁÍêÒ»ÉÈÇø£¬Ìøµ½ÏÂÒ»ÉÈÇø
+	dec	word [i]		; µÝ¼õÑ­»·´ÎÊýÖµ
+	; ÅÐ¶ÏÊÇ·ñÎªÎÄ¼þÌõÄ¿£¨0¿ªÊ¼µÄÎª¿ÕÏî¡¢E5h¿ªÊ¼µÄÎªÒÑÉ¾Ïî¡¢ÊôÐÔµÍ4Î»È«1µÄ
+	; Îª³¤ÎÄ¼þÃûÏî»òÏµÍ³Õ¼ÓÃÏî¡¢¾í±êÏîµÄÊôÐÔ3ºÅÎ»Îª1£©
+	cmp	byte [di], 0	; ÎÄ¼þÃûµÄÊ××ÖÄ¸=0£¿
+	jz	notfi			; Îª¿ÕÄ¿Â¼Ïî
+	cmp	byte [di], 0E5h	; ÎÄ¼þÃûµÄÊ××ÖÄ¸=E5£¿
+	jz	notfi 			; ÎªÒÑÉ¾³ýÄ¿Â¼Ïî
+	cmp	byte [di + 11], 0Fh; ÎÄ¼þÊôÐÔ=0Fh£¿
+	jz	notfi 			; Îª³¤ÎÄ¼þÃûÄ¿Â¼Ïî
 
-	; æ˜¾ç¤ºæ–‡ä»¶åä¸²
-	inc word [lns]		; å½“å‰å±å¹•ä¸Šçš„æ–‡ä»¶æ¡ç›®æ•°lns++
+	; ÏÔÊ¾ÎÄ¼þÃû´®
+	inc word [lns]		; µ±Ç°ÆÁÄ»ÉÏµÄÎÄ¼þÌõÄ¿Êýlns++
 	Inc word [FileNum]
-	; åˆ¤æ–­æ˜¯å¦åˆ°äº†å±å¹•åº•éƒ¨
-	cmp word [lns], 24	; è¡Œæ•° = 24 ï¼Ÿ
-	jb .1				; < 24 ç»§ç»­
-	mov word [lns], 1	; é‡æ–°è®¾å·²æ˜¾ç¤ºè¡Œæ•°ä¸º1
-	call waitforkey		; æŒ‰ä»»æ„é”®ç»§ç»­
-.1: ; ç»§ç»­
-	; æ˜¾ç¤ºæ–‡ä»¶æ¡ç›®ä¿¡æ¯ï¼ˆæ–‡ä»¶åã€å¤§å°ã€æ—¶é—´ï¼‰
-	; æ˜¾ç¤ºæ–‡ä»¶åä¸²
-	mov bp, di			; BP=æ–‡ä»¶åå­—ç¬¦ä¸²çš„èµ·å§‹åœ°å€
-	mov cx, 11			; æ–‡ä»¶åä¸²é•¿8+3=11
-	call DispStr		; è°ƒç”¨æ˜¾ç¤ºå­—ç¬¦ä¸²ä¾‹ç¨‹
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-
-	; å¯¹å·æ ‡é¡¹ï¼Œä¸æ˜¾ç¤ºæ–‡ä»¶å¤§å°ï¼Œæ˜¾ç¤ºæ ‡è¯†ä¸²"<VOL>"
-	mov al, [di + 0Bh]	; AL=æ–‡ä»¶å±žæ€§
-	and al, 8h			; AL & 8ï¼ˆå·æ ‡ä½ï¼‰
-	jz .2	 			; ä¸ä¸ºå·æ ‡
-	; ä¸ºå·æ ‡ï¼Œæ˜¾ç¤ºå­—ç¬¦ä¸²"<VOL>"
-	mov bp, volbuf		; ä¸²åœ°å€
-	mov cx, fsbuflen + btbuflen + 1	; ä¸²é•¿=æ–‡ä»¶å¤§å°çš„ä¸²é•¿
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	jmp .3				; è·³è¿‡æ˜¾ç¤ºæ–‡ä»¶å¤§å°ä¸²
+	; ÅÐ¶ÏÊÇ·ñµ½ÁËÆÁÄ»µ×²¿
+	cmp word [lns], 30	; ÐÐÊý = 30 £¿
+	jb .1				; < 24 ¼ÌÐø
+	mov word [lns], 1	; ÖØÐÂÉèÒÑÏÔÊ¾ÐÐÊýÎª1
+	call waitforkey		; °´ÈÎÒâ¼ü¼ÌÐø
+.1: ; ¼ÌÐø
+	; ÏÔÊ¾ÎÄ¼þÌõÄ¿ÐÅÏ¢£¨ÎÄ¼þÃû¡¢´óÐ¡¡¢Ê±¼ä£©
+	; ÏÔÊ¾ÎÄ¼þÃû´®
+	mov bp, di			; BP=ÎÄ¼þÃû×Ö·û´®µÄÆðÊ¼µØÖ·
+	mov cx, 11			; ÎÄ¼þÃû´®³¤8+3=11
+	;ÅÐ¶ÏÊÇ·ñÎªÖÐÎÄ
+	push ax
+	mov al,[di + 02h]
+	cmp al,80h
+	ja .Chin            ; ÎÞ·ûºÅ´óÐ¡¿ØÖÆ
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+	jmp .DispEnd
+.Chin
+	mov cx,4            ;Ö»ÄÜÏÔÊ¾ËÄ¸öºº×Ö
+	call DispStr_Chinese		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	mov cx,4            ;Ö»ÄÜÏÔÊ¾ËÄ¸öºº×Ö
+	add bp,8
+	mov cx,3
+	call DispStr		; µ÷ÓÃÏÔÊ¾×Ö·û´®Àý³Ì
+	call space			; ²åÈë¿Õ¸ñ·û
+.DispEnd
+	pop ax
+	; ¶Ô¾í±êÏî£¬²»ÏÔÊ¾ÎÄ¼þ´óÐ¡£¬ÏÔÊ¾±êÊ¶´®"<VOL>"
+	mov al, [di + 0Bh]	; AL=ÎÄ¼þÊôÐÔ
+	and al, 8h			; AL & 8£¨¾í±êÎ»£©
+	jz .1.1	 			; ²»Îª¾í±ê
+	; Îª¾í±ê£¬ÏÔÊ¾×Ö·û´®"<VOL>"
+	mov bp, volbuf		; ´®µØÖ·
+	mov cx, fsbuflen + btbuflen + 1	; ´®³¤=ÎÄ¼þ´óÐ¡µÄ´®³¤
+	call DispStr		; ÏÔÊ¾×Ö·û´®
+	jmp .3				; Ìø¹ýÏÔÊ¾ÎÄ¼þ´óÐ¡´®
+.1.1:	
+	; ¶Ô×ÓÄ¿Â¼Ïî£¬²»ÏÔÊ¾ÎÄ¼þ´óÐ¡£¬ÏÔÊ¾±êÊ¶´®"<DIR>"
+	cmp byte [di + 0Bh], 10h ; Îª×ÓÄ¿Â¼£¿
+	jne .2				; ÏÔÊ¾ÎÄ¼þ´óÐ¡
+	; ÏÔÊ¾×Ö·û´®"<DIR>"
+	mov bp, dsbuf		; ´®µØÖ·
+	mov cx, fsbuflen + btbuflen + 1	; ´®³¤=ÎÄ¼þ´óÐ¡µÄ´®³¤
+	call DispStr		; ÏÔÊ¾×Ö·û´®
+	jmp .3				; Ìø¹ýÏÔÊ¾ÎÄ¼þ´óÐ¡´®
 	
-	; å¯¹å­ç›®å½•é¡¹ï¼Œä¸æ˜¾ç¤ºæ–‡ä»¶å¤§å°ï¼Œæ˜¾ç¤ºæ ‡è¯†ä¸²"<DIR>"
-	cmp byte [di + 0Bh], 10h ; ä¸ºå­ç›®å½•ï¼Ÿ
-	jne .2				; æ˜¾ç¤ºæ–‡ä»¶å¤§å°
-	; æ˜¾ç¤ºå­—ç¬¦ä¸²"<DIR>"
-	mov bp, dsbuf		; ä¸²åœ°å€
-	mov cx, fsbuflen + btbuflen + 1	; ä¸²é•¿=æ–‡ä»¶å¤§å°çš„ä¸²é•¿
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	jmp .3				; è·³è¿‡æ˜¾ç¤ºæ–‡ä»¶å¤§å°ä¸²
-	
-.2: ; è®¡ç®—å¹¶æ˜¾ç¤ºæ–‡ä»¶å¤§å°åè¿›åˆ¶ä¸²
+.2: ; ¼ÆËã²¢ÏÔÊ¾ÎÄ¼þ´óÐ¡Ê®½øÖÆ´®
 	;push eax
 	;push ebx
 	;mov ebx,[FileSize] 
-	;add eax,ebx ;æ–‡ä»¶æ€»å¤§å°++
+	;add eax,ebx ;ÎÄ¼þ×Ü´óÐ¡++
 	;mov [FileSize],eax
 	;pop ebx
 	push eax
-	mov eax, [di + 1Ch]; EAX = æ–‡ä»¶å¤§å°
-	add [FileSize],eax ;æ–‡ä»¶å¤§å°++
+	mov eax, [di + 1Ch]; EAX = ÎÄ¼þ´óÐ¡
+	add [FileSize],eax ;ÎÄ¼þ´óÐ¡++
 	pop eax
-	call getsizestr		; èŽ·å–æ–‡ä»¶å¤§å°åè¿›åˆ¶ä¸²
-	mov bp, fsbuf		; ä¸²åœ°å€
-	mov cx, fsbuflen	; ä¸²é•¿
-	; æ˜¾ç¤ºæ–‡ä»¶å¤§å°å­—ç¬¦ä¸²
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	; æ˜¾ç¤ºå­—èŠ‚å­—ç¬¦ä¸²ï¼ˆæ–‡ä»¶å¤§å°å•ä½ï¼‰"Byte"
-	mov bp, btbuf		; ä¸²åœ°å€
-	mov cx, btbuflen	; ä¸²é•¿
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
+	call getsizestr		; »ñÈ¡ÎÄ¼þ´óÐ¡Ê®½øÖÆ´®
+	mov bp, fsbuf		; ´®µØÖ·
+	mov cx, fsbuflen	; ´®³¤
+	; ÏÔÊ¾ÎÄ¼þ´óÐ¡×Ö·û´®
+	call DispStr		; ÏÔÊ¾×Ö·û´®
+	call space			; ²åÈë¿Õ¸ñ·û
+	; ÏÔÊ¾×Ö½Ú×Ö·û´®£¨ÎÄ¼þ´óÐ¡µ¥Î»£©"Byte"
+	mov bp, btbuf		; ´®µØÖ·
+	mov cx, btbuflen	; ´®³¤
+	call DispStr		; ÏÔÊ¾×Ö·û´®
 
-.3: ; æ’å…¥è‹¥å¹²ç©ºæ ¼åˆ†éš”ç¬¦
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
+.3: ; ²åÈëÈô¸É¿Õ¸ñ·Ö¸ô·û
+	call space			; ²åÈë¿Õ¸ñ·û
+	call space			; ²åÈë¿Õ¸ñ·û
+	call space			; ²åÈë¿Õ¸ñ·û
 	
-	; æ˜¾ç¤ºæ—¶é—´ï¼ˆå¹´æœˆæ—¥æ—¶åˆ†ç§’ï¼Œæ ¼å¼ä¸ºï¼šyyyy.mm.dd  hh:mm:ssï¼‰
-	; æ˜¾ç¤ºæ—¥æœŸï¼ˆå¹´.æœˆ.æ—¥ï¼‰
-	mov ax, [di + 18h]	; AX = æ—¥æœŸï¼ˆä½Ž5ä½ä¸ºæ—¥ã€ä¸­4ä½ä¸ºæœˆã€é«˜7ä½ä¸ºå¹´-1980ï¼‰
-	push ax				; ä¿å­˜AXè¿›æ ˆ
-	; æ˜¾ç¤ºå¹´ï¼ˆé«˜7ä½ä¸ºå¹´-1980ï¼‰
-	shr ax, 9			; AX >> 9ï¼ŒAX = å¹´ - 1980
-	add ax, 1980		; AX + 1980 = å¹´
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	call DispStr		; æ˜¾ç¤ºå¹´å­—ç¬¦ä¸²
-	; æ˜¾ç¤ºæœˆï¼ˆä¸­4ä½ä¸ºæœˆï¼‰
-	pop ax				; å¼¹å‡ºAX = æ—¥æœŸ
-	push ax				; ä¿å­˜AXè¿›æ ˆ
+	; ÏÔÊ¾Ê±¼ä£¨ÄêÔÂÈÕÊ±·ÖÃë£¬¸ñÊ½Îª£ºyyyy.mm.dd  hh:mm:ss£©
+	; ÏÔÊ¾ÈÕÆÚ£¨Äê.ÔÂ.ÈÕ£©
+	mov ax, [di + 18h]	; AX = ÈÕÆÚ£¨µÍ5Î»ÎªÈÕ¡¢ÖÐ4Î»ÎªÔÂ¡¢¸ß7Î»ÎªÄê-1980£©
+	push ax				; ±£´æAX½øÕ»
+	; ÏÔÊ¾Äê£¨¸ß7Î»ÎªÄê-1980£©
+	shr ax, 9			; AX >> 9£¬AX = Äê - 1980
+	add ax, 1980		; AX + 1980 = Äê
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	call DispStr		; ÏÔÊ¾Äê×Ö·û´®
+	; ÏÔÊ¾ÔÂ£¨ÖÐ4Î»ÎªÔÂ£©
+	pop ax				; µ¯³öAX = ÈÕÆÚ
+	push ax				; ±£´æAX½øÕ»
 	shr ax, 5			; AX >> 5
-	and ax, 0Fh			; AX & 1111 b = æœˆ
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	cmp cx, 1			; ä¸²é•¿ > 1 ï¼Ÿ
-	ja .4				; > 1ï¼šè·³è½¬
-	; = 1ï¼šè¡¥å……å­—ç¬¦'0'
+	and ax, 0Fh			; AX & 1111 b = ÔÂ
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	cmp cx, 1			; ´®³¤ > 1 £¿
+	ja .4				; > 1£ºÌø×ª
+	; = 1£º²¹³ä×Ö·û'0'
 	dec bp				; BP--
-	mov byte [bp], '0'	; åŠ å‰å¯¼'0'
-	inc cx				; ä¸²é•¿CX++
-.4: ; æ·»åŠ å¥ç‚¹åˆ†éš”ç¬¦'.'
+	mov byte [bp], '0'	; ¼ÓÇ°µ¼'0'
+	inc cx				; ´®³¤CX++
+.4: ; Ìí¼Ó¾äµã·Ö¸ô·û'.'
 	dec bp				; BP--
-	mov byte [bp], '.'	; åŠ å¥ç‚¹ç¬¦'.'
-	inc cx				; ä¸²é•¿CX++
-	call DispStr		; æ˜¾ç¤ºæœˆå­—ç¬¦ä¸²
-	; æ˜¾ç¤ºæ—¥ï¼ˆä½Ž5ä½ä¸ºæ—¥ï¼‰
-	pop ax				; å¼¹å‡ºAX = æ—¥æœŸ
-	and ax, 1Fh			; AX & 1 1111 b = æ—¥
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	cmp cx, 1			; ä¸²é•¿ > 1 ï¼Ÿ
-	ja .5				; > 1ï¼šè·³è½¬
-	; = 1ï¼šè¡¥å……å­—ç¬¦'0'
+	mov byte [bp], '.'	; ¼Ó¾äµã·û'.'
+	inc cx				; ´®³¤CX++
+	call DispStr		; ÏÔÊ¾ÔÂ×Ö·û´®
+	; ÏÔÊ¾ÈÕ£¨µÍ5Î»ÎªÈÕ£©
+	pop ax				; µ¯³öAX = ÈÕÆÚ
+	and ax, 1Fh			; AX & 1 1111 b = ÈÕ
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	cmp cx, 1			; ´®³¤ > 1 £¿
+	ja .5				; > 1£ºÌø×ª
+	; = 1£º²¹³ä×Ö·û'0'
 	dec bp				; BP--
-	mov byte [bp], '0'	; åŠ å‰å¯¼'0'
-	inc cx				; ä¸²é•¿CX++
-.5: ; æ·»åŠ å¥ç‚¹åˆ†éš”ç¬¦'.'
+	mov byte [bp], '0'	; ¼ÓÇ°µ¼'0'
+	inc cx				; ´®³¤CX++
+.5: ; Ìí¼Ó¾äµã·Ö¸ô·û'.'
 	dec bp				; BP--
-	mov byte [bp], '.'	; åŠ å¥ç‚¹ç¬¦'.'
-	inc cx				; ä¸²é•¿CX++
-	call DispStr		; æ˜¾ç¤ºæ—¥å­—ç¬¦ä¸²
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
+	mov byte [bp], '.'	; ¼Ó¾äµã·û'.'
+	inc cx				; ´®³¤CX++
+	call DispStr		; ÏÔÊ¾ÈÕ×Ö·û´®
+	call space			; ²åÈë¿Õ¸ñ·û
+	call space			; ²åÈë¿Õ¸ñ·û
 
-	; æ˜¾ç¤ºæ—¶é—´ï¼ˆæ—¶:åˆ†:ç§’ï¼‰	
-	mov ax, [di + 16h]	; AX = æ—¶é—´ï¼ˆä½Ž5ä½ä¸ºç§’/2ã€ä¸­6ä½ä¸ºåˆ†ã€é«˜5ä½ä¸ºæ—¶ï¼‰
-	push ax				; ä¿å­˜AXè¿›æ ˆ
-	; æ˜¾ç¤ºæ—¶ï¼ˆé«˜5ä½ä¸ºæ—¶ï¼‰
-	shr ax, 11			; AX >> 11ï¼ŒAX = æ—¶
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	cmp cx, 1			; ä¸²é•¿ > 1 ï¼Ÿ
-	ja .6				; > 1ï¼šè·³è½¬
-	; = 1ï¼šè¡¥å……å­—ç¬¦'0'
+	; ÏÔÊ¾Ê±¼ä£¨Ê±:·Ö:Ãë£©	
+	mov ax, [di + 16h]	; AX = Ê±¼ä£¨µÍ5Î»ÎªÃë/2¡¢ÖÐ6Î»Îª·Ö¡¢¸ß5Î»ÎªÊ±£©
+	push ax				; ±£´æAX½øÕ»
+	; ÏÔÊ¾Ê±£¨¸ß5Î»ÎªÊ±£©
+	shr ax, 11			; AX >> 11£¬AX = Ê±
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	cmp cx, 1			; ´®³¤ > 1 £¿
+	ja .6				; > 1£ºÌø×ª
+	; = 1£º²¹³ä×Ö·û'0'
 	dec bp				; BP--
-	mov byte [bp], '0'	; åŠ å‰å¯¼'0'
-	inc cx				; ä¸²é•¿CX++
+	mov byte [bp], '0'	; ¼ÓÇ°µ¼'0'
+	inc cx				; ´®³¤CX++
 .6:	
-	call DispStr		; æ˜¾ç¤ºæ—¶å­—ç¬¦ä¸²
-	; æ˜¾ç¤ºåˆ†ï¼ˆä¸­6ä½ä¸ºåˆ†ï¼‰
-	pop ax				; å¼¹å‡ºAX = æ—¶é—´
-	push ax				; ä¿å­˜AXè¿›æ ˆ
+	call DispStr		; ÏÔÊ¾Ê±×Ö·û´®
+	; ÏÔÊ¾·Ö£¨ÖÐ6Î»Îª·Ö£©
+	pop ax				; µ¯³öAX = Ê±¼ä
+	push ax				; ±£´æAX½øÕ»
 	shr ax, 5			; AX >> 5
-	and ax, 3Fh			; AX & 11 1111 b = åˆ†
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	cmp cx, 1			; ä¸²é•¿ > 1 ï¼Ÿ
-	ja .7				; > 1ï¼šè·³è½¬
-	; = 1ï¼šè¡¥å……å­—ç¬¦'0'
+	and ax, 3Fh			; AX & 11 1111 b = ·Ö
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	cmp cx, 1			; ´®³¤ > 1 £¿
+	ja .7				; > 1£ºÌø×ª
+	; = 1£º²¹³ä×Ö·û'0'
 	dec bp				; BP--
-	mov byte [bp], '0'	; åŠ å‰å¯¼'0'
-	inc cx				; ä¸²é•¿CX++
-.7: ; æ·»åŠ å†’å·åˆ†éš”ç¬¦':'
+	mov byte [bp], '0'	; ¼ÓÇ°µ¼'0'
+	inc cx				; ´®³¤CX++
+.7: ; Ìí¼ÓÃ°ºÅ·Ö¸ô·û':'
 	dec bp				; BP--
-	mov byte [bp], ':'	; åŠ å‰å¯¼':'
-	inc cx				; ä¸²é•¿CX++
-	call DispStr		; æ˜¾ç¤ºæœˆå­—ç¬¦ä¸²
-	; æ˜¾ç¤ºç§’ï¼ˆä½Ž5ä½ä¸ºç§’/2ï¼‰
-	pop ax				; å¼¹å‡ºAX = æ—¶é—´
-	and ax, 1Fh			; AX & 1 1111 b = ç§’/2
-	shl ax, 1			; AX << 1ï¼ŒAX*2 = ç§’
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
-	cmp cx, 1			; ä¸²é•¿ > 1 ï¼Ÿ
-	ja .8				; > 1ï¼šè·³è½¬
-	; = 1ï¼šè¡¥å……å­—ç¬¦'0'
+	mov byte [bp], ':'	; ¼ÓÇ°µ¼':'
+	inc cx				; ´®³¤CX++
+	call DispStr		; ÏÔÊ¾ÔÂ×Ö·û´®
+	; ÏÔÊ¾Ãë£¨µÍ5Î»ÎªÃë/2£©
+	pop ax				; µ¯³öAX = Ê±¼ä
+	and ax, 1Fh			; AX & 1 1111 b = Ãë/2
+	shl ax, 1			; AX << 1£¬AX*2 = Ãë
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
+	cmp cx, 1			; ´®³¤ > 1 £¿
+	ja .8				; > 1£ºÌø×ª
+	; = 1£º²¹³ä×Ö·û'0'
 	dec bp				; BP--
-	mov byte [bp], '0'	; åŠ å‰å¯¼'0'
-	inc cx				; ä¸²é•¿CX++
-.8: ; æ·»åŠ å†’å·åˆ†éš”ç¬¦':'
+	mov byte [bp], '0'	; ¼ÓÇ°µ¼'0'
+	inc cx				; ´®³¤CX++
+.8: ; Ìí¼ÓÃ°ºÅ·Ö¸ô·û':'
 	dec bp				; BP--
-	mov byte [bp], ':'	; åŠ å‰å¯¼':'
-	inc cx				; ä¸²é•¿CX++
-	call DispStr		; æ˜¾ç¤ºæ—¥å­—ç¬¦ä¸²
+	mov byte [bp], ':'	; ¼ÓÇ°µ¼':'
+	inc cx				; ´®³¤CX++
+	call DispStr		; ÏÔÊ¾ÈÕ×Ö·û´®
 	
-	call newline		; å›žè½¦æ¢è¡Œ
+	call newline		; »Ø³µ»»ÐÐ
 	
 notfi:
-	add	di, 20h			; DI += 20h æŒ‡å‘ä¸‹ä¸€ä¸ªç›®å½•æ¡ç›®å¼€å§‹å¤„
-	jmp	searchfi		; è½¬åˆ°å¾ªçŽ¯å¼€å§‹å¤„
+	add	di, 20h			; DI += 20h Ö¸ÏòÏÂÒ»¸öÄ¿Â¼ÌõÄ¿¿ªÊ¼´¦
+	jmp	searchfi		; ×ªµ½Ñ­»·¿ªÊ¼´¦
 
-nextsec:
-	inc	word [isec_ls] 	; é€’å¢žå½“å‰æ‰‡åŒºå·
-	jmp	searchrdir		; ç»§ç»­æœç´¢æ ¹ç›®å½•å¾ªçŽ¯
-
-exit: ; ç»ˆæ­¢ç¨‹åºï¼Œè¿”å›ž
+nextsec:   ;¶ÔÓÚ×ÓÄ¿Â¼nextsecÒª×Ô¼ºËã³öÀ´(Ö±½ÓÊ¹ÓÃtoDirÖÐµÄËã·¨)  Óë¸ùÄ¿Â¼Ëã·¨²»Í¬
+	cmp word[SectorNoOfCurrentDirectory],SectorNoOfRootDirectory
+	jz .root
+	pusha
+	push es
+	push ds
+	mov	ax, BaseOfLoader
+	mov	es, ax			; ES <- BaseOfLoader£¨»º³åÇø»ùÖ·=4000h£©
+	mov	bx, OffsetOfLoader ; BX <- OffsetOfLoader£¨»º³åÇøÆ«ÒÆµØÖ·=100h£©
+	mov ax,[isec_ls]
+	sub ax,1fh
+	call GetFATEntry	; »ñÈ¡FATÏîÖÐµÄÏÂÒ»´ØºÅ
+	mov [temp_ax],ax
+	pop ds
+	pop es
+	popa
+	
+	cmp	word [temp_ax], 0FF8h		; ÊÇ·ñÊÇÄ¿Â¼µÄ×îºó´Ø
+	jae	exit ; ¡ÝFF8hÊ±Ìø×ª£¬·ñÔò¶ÁÏÂÒ»¸ö´Ø
+	
+	push ax
+	mov ax,[temp_ax]
+	mov	word [isec_ls],ax
+	add	word [isec_ls],1fh 	; ÐÞ¸Ä³É¼´½«·ÃÎÊµÄÉÈÇøºÅ  
+	pop ax
+	jmp	searchrdir		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+.root:
+	inc word [isec_ls]  ;¶ÔÓÚ¸ùÄ¿Â¼£¬Ö»Ðè×ÔÔö
+	jmp searchrdir		; ¼ÌÐøËÑË÷Ä¿Â¼Ñ­»·
+exit: ; ÖÕÖ¹³ÌÐò£¬·µ»Ø
 .9:
 	call newline
 	mov bp,fileNumberBuf1
 	mov cx,fileNumberBufLen1
 	call DispStr
 	
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
+	call space			; ²åÈë¿Õ¸ñ·û
 	
 	mov ax,[FileNum]
-	call GetDigStr 		; ä»¥AXä¸ºä¼ é€’å‚æ•°ï¼Œ[ä¸²åœ°å€]BPå’Œ[å­—ç¬¦ä¸ªæ•°]CXä¸ºè¿”å›žå€¼
+	call GetDigStr 		; ÒÔAXÎª´«µÝ²ÎÊý£¬[´®µØÖ·]BPºÍ[×Ö·û¸öÊý]CXÎª·µ»ØÖµ
 	call DispStr
 	
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
+	call space			; ²åÈë¿Õ¸ñ·û
 	
 	mov bp,fileNumberBuf2
 	mov cx,fileNumberBufLen2
 	call DispStr
 	
-	mov word[FileNum],0     ;æ˜¾ç¤ºå®Œæ¸…é›¶è®¡æ•°å™¨
+	mov word[FileNum],0     ;ÏÔÊ¾ÍêÇåÁã¼ÆÊýÆ÷
 .10:
 	push di
 	mov di,FileSize-1ch
-	call getsizestr		; èŽ·å–æ–‡ä»¶å¤§å°åè¿›åˆ¶ä¸²
+	call getsizestr		; »ñÈ¡ÎÄ¼þ´óÐ¡Ê®½øÖÆ´®
 	pop di
 	
-	mov bp, fsbuf		; ä¸²åœ°å€
-	mov cx, fsbuflen	; ä¸²é•¿
-	; æ˜¾ç¤ºæ–‡ä»¶å¤§å°å­—ç¬¦ä¸²
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	call space			; æ’å…¥ç©ºæ ¼ç¬¦
-	; æ˜¾ç¤ºå­—èŠ‚å­—ç¬¦ä¸²ï¼ˆæ–‡ä»¶å¤§å°å•ä½ï¼‰"Byte"
-	mov bp, btbuf		; ä¸²åœ°å€
-	mov cx, btbuflen	; ä¸²é•¿
-	call DispStr		; æ˜¾ç¤ºå­—ç¬¦ä¸²
-	mov dword[FileSize],0     ;æ˜¾ç¤ºå®Œæ¸…é›¶è®¡æ•°å™¨
+	mov bp, fsbuf		; ´®µØÖ·
+	mov cx, fsbuflen	; ´®³¤
+	; ÏÔÊ¾ÎÄ¼þ´óÐ¡×Ö·û´®
+	call DispStr		; ÏÔÊ¾×Ö·û´®
+	call space			; ²åÈë¿Õ¸ñ·û
+	; ÏÔÊ¾×Ö½Ú×Ö·û´®£¨ÎÄ¼þ´óÐ¡µ¥Î»£©"Byte"
+	mov bp, btbuf		; ´®µØÖ·
+	mov cx, btbuflen	; ´®³¤
+	call DispStr		; ÏÔÊ¾×Ö·û´®
+	mov dword[FileSize],0     ;ÏÔÊ¾ÍêÇåÁã¼ÆÊýÆ÷
 	ret
-isec_ls dw 0;å½“å‰æ‰‡åŒºï¼ˆç”¨äºŽlsï¼‰	
-nsec_ls dw 0;å‰©ä½™æ‰‡åŒºæ•°ï¼ˆç”¨äºŽlsï¼‰
-isec dw 0	; å½“å‰æ‰‡åŒºå·
-nsec dw 0	; å‰©ä½™æ‰‡åŒºæ•°
-lns dw 0	; å®šä¹‰è¡Œæ•°ï¼Œåˆå€¼ä¸º0
-FileNum dw 0	; æ–‡ä»¶ä¸ªæ•°ï¼Œåˆå€¼ä¸º0
-FileSize dd 0   ; æ–‡ä»¶æ€»å¤§å°ï¼Œåˆå€¼ä¸º0
-secspt dw 0	; æ¯ç£é“æ‰‡åŒºæ•°
-heads dw 0	; ç£å¤´æ•°
+temp_ax dw 0
+isec_ls dw 0;µ±Ç°ÉÈÇø£¨ÓÃÓÚls£©	
+nsec_ls dw 0;Ê£ÓàÉÈÇøÊý£¨ÓÃÓÚls£©
+isec dw 0	; µ±Ç°ÉÈÇøºÅ
+nsec dw 0	; Ê£ÓàÉÈÇøÊý
+lns dw 0	; ¶¨ÒåÐÐÊý£¬³õÖµÎª0
+FileNum dw 0	; ÎÄ¼þ¸öÊý£¬³õÖµÎª0
+FileSize dd 0   ; ÎÄ¼þ×Ü´óÐ¡£¬³õÖµÎª0
+secspt dw 0	; Ã¿´ÅµÀÉÈÇøÊý
+heads dw 0	; ´ÅÍ·Êý
 
-fsbuf db '0,987,654,321' ; æ–‡ä»¶å¤§å°ä¸²
-fsbuflen equ $ - fsbuf ; ä¸²é•¿
-dsbuf db '            <DIR>          ' ; å­ç›®å½•æ ‡è¯†ä¸²
-;dsbuflen equ $ - dsbuf ; ä¸²é•¿
-volbuf db '            <VOL>          ' ; å·æ ‡æ ‡è¯†ä¸²
+fsbuf db '0,987,654,321' ; ÎÄ¼þ´óÐ¡´®
+fsbuflen equ $ - fsbuf ; ´®³¤
+dsbuf db  '            <DIR>          ' ; ×ÓÄ¿Â¼±êÊ¶´®
+;dsbuflen equ $ - dsbuf ; ´®³¤
+volbuf db '            <VOL>          ' ; ¾í±ê±êÊ¶´®
 ;volbuflen equ $ - volbuf
-btbuf db 'Byte' ; å­—èŠ‚å­—ç¬¦ä¸²
-btbuflen equ $ - btbuf ; ä¸²é•¿
+btbuf db 'Byte' ; ×Ö½Ú×Ö·û´®
+btbuflen equ $ - btbuf ; ´®³¤
 fileNumberBuf1 db '  ALL'
 fileNumberBufLen1 equ $-fileNumberBuf1
 fileNumberBuf2 db 'files.'
 fileNumberBufLen2 equ $-fileNumberBuf2
 ;--------------------------------------------------------------------
-getsizestr: ; èŽ·å–æ–‡ä»¶å¤§å°åè¿›åˆ¶ä¸²
-	; ç”¨ç©ºæ ¼ç¬¦ï¼ˆ20hï¼‰å¡«å……fsbuf
-	push di			; ä¿å­˜DIåˆ°æ ˆ
-	mov cx, fsbuflen; å¾ªçŽ¯æ¬¡æ•°CX=å‘½ä»¤è¡Œç¼“å†²åŒºfsbufçš„é•¿åº¦
-	mov al, 20h		; AL=è¦å¡«å……çš„ç©ºæ ¼ç¬¦ASCIIç 
-	mov di, fsbuf	; ES:DI=å­—ç¬¦ä¸²çš„èµ·å§‹åœ°å€
-	rep stosb		; CX>0æ—¶å°†ALå­˜å‚¨åˆ°[ES:DI]ï¼ŒCX--ã€DI++
-	pop di			; ä»Žæ ˆæ¢å¤DI
+getsizestr: ; »ñÈ¡ÎÄ¼þ´óÐ¡Ê®½øÖÆ´®
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äfsbuf
+	push di			; ±£´æDIµ½Õ»
+	mov cx, fsbuflen; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøfsbufµÄ³¤¶È
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, fsbuf	; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	pop di			; ´ÓÕ»»Ö¸´DI
 
-	; è®¡ç®—æ–‡ä»¶å¤§å°åè¿›åˆ¶ä¸²
-	mov cx, 0		; å½“å‰åˆ†æ®µæ•°å­—ä¸ªæ•°ï¼ˆåˆå§‹åŒ–ä¸º0ï¼‰
-	mov bp, fsbuf	; BP = fsbuf + fsbuflen - 1 = fsbufçš„å½“å‰ä½ç½®
-	add bp, fsbuflen - 1 ; BP = ä¸²å°¾
-	mov ebx,10		; é™¤æ•°=10
-	mov eax, [di + 1Ch]; EAX = æ–‡ä»¶å¤§å°
+	; ¼ÆËãÎÄ¼þ´óÐ¡Ê®½øÖÆ´®
+	mov cx, 0		; µ±Ç°·Ö¶ÎÊý×Ö¸öÊý£¨³õÊ¼»¯Îª0£©
+	mov bp, fsbuf	; BP = fsbuf + fsbuflen - 1 = fsbufµÄµ±Ç°Î»ÖÃ
+	add bp, fsbuflen - 1 ; BP = ´®Î²
+	mov ebx,10		; ³ýÊý=10
+	mov eax, [di + 1Ch]; EAX = ÎÄ¼þ´óÐ¡
 	
-.1: ; å¾ªçŽ¯å¼€å§‹å¤„
+.1: ; Ñ­»·¿ªÊ¼´¦
 	mov edx, 0		; EDX = 0
-	div ebx			; EDX:EAX / EBX -> å•†EAXã€ä½™EDX
-	add dl, 30h		; ä½™æ•° + 30h = å¯¹åº”çš„æ•°å­—ç¬¦ASCIIç 
+	div ebx			; EDX:EAX / EBX -> ÉÌEAX¡¢ÓàEDX
+	add dl, 30h		; ÓàÊý + 30h = ¶ÔÓ¦µÄÊý×Ö·ûASCIIÂë
 	mov [bp], dl	; fsbuf[BP] = DL
-	cmp eax, 0		; å•†EAX = 0 ?
-	je .2			; = 0 è·³å‡ºå¾ªçŽ¯
-	dec bp			; æ•°å­—ç¬¦çš„å½“å‰ä½ç½®BP--
-	inc cx			; å½“å‰åˆ†æ®µæ•°å­—ä¸ªæ•°++
-	cmp cx, 3		; CX == 3 ï¼Ÿ
-	jne .1			; â‰  ç»§ç»­å¾ªçŽ¯
-	; æ·»åŠ é€—å·åˆ†éš”ç¬¦
-	mov byte [bp], ',' ; æ’å…¥é€—å·åˆ†éš”ç¬¦â€œ,â€
-	dec bp			; æ•°å­—ç¬¦çš„å½“å‰ä½ç½®BP--
-	mov cx, 0		; é‡æ–°ç½®CX=0
-	jmp .1			; ç»§ç»­å¾ªçŽ¯
-.2: ; é€€å‡ºå¾ªçŽ¯
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	cmp eax, 0		; ÉÌEAX = 0 ?
+	je .2			; = 0 Ìø³öÑ­»·
+	dec bp			; Êý×Ö·ûµÄµ±Ç°Î»ÖÃBP--
+	inc cx			; µ±Ç°·Ö¶ÎÊý×Ö¸öÊý++
+	cmp cx, 3		; CX == 3 £¿
+	jne .1			; ¡Ù ¼ÌÐøÑ­»·
+	; Ìí¼Ó¶ººÅ·Ö¸ô·û
+	mov byte [bp], ',' ; ²åÈë¶ººÅ·Ö¸ô·û¡°,¡±
+	dec bp			; Êý×Ö·ûµÄµ±Ç°Î»ÖÃBP--
+	mov cx, 0		; ÖØÐÂÖÃCX=0
+	jmp .1			; ¼ÌÐøÑ­»·
+.2: ; ÍË³öÑ­»·
+	ret				; ´ÓÀý³Ì·µ»Ø
 
 ;--------------------------------------------------------------------
-waitforkey: ; æŒ‰ä»»æ„é”®ç»§ç»­
-	; èŽ·å–å½“å‰å…‰æ ‡ä½ç½®ï¼ˆè¿”å›žçš„è¡Œåˆ—å·åˆ†åˆ«åœ¨DHå’ŒDLä¸­ï¼‰
-	mov ah, 3		; åŠŸèƒ½å·
-	mov bh, 0		; ç¬¬0é¡µ
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; æ˜¾ç¤ºæç¤ºä¸²
-	mov ah, 13h 	; BIOSä¸­æ–­çš„åŠŸèƒ½å·ï¼ˆæ˜¾ç¤ºå­—ç¬¦ä¸²ï¼‰
-	mov al, 1 		; å…‰æ ‡æ”¾åˆ°ä¸²å°¾
-	mov bh, 0 		; é¡µå·=0
-	mov bl, 0fh 	; å­—ç¬¦é¢œè‰²=ä¸é—ªï¼ˆ0ï¼‰é»‘åº•ï¼ˆ000ï¼‰äº®ç™½å­—ï¼ˆ1111ï¼‰
-	mov bp, pkinstr	; BP=ä¸²åœ°å€
-	mov cx, pkinstrlen; CX=ä¸²é•¿
-	mov dl, 0		; åˆ—å·=0
-	int 10h 		; è°ƒç”¨10Hå·æ˜¾ç¤ºä¸­æ–­
-	; ç­‰å¾…ç”¨æˆ·æŒ‰é”®
-	mov ah, 0		; åŠŸèƒ½å·ï¼ˆæŽ¥å—é”®ç›˜å­—ç¬¦è¾“å…¥ï¼‰
-	int 16h			; è°ƒç”¨16hé”®ç›˜ä¸­æ–­
+waitforkey: ; °´ÈÎÒâ¼ü¼ÌÐø
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; ÏÔÊ¾ÌáÊ¾´®
+	mov ah, 13h 	; BIOSÖÐ¶ÏµÄ¹¦ÄÜºÅ£¨ÏÔÊ¾×Ö·û´®£©
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bh, 0 		; Ò³ºÅ=0
+	mov bl, 0fh 	; ×Ö·ûÑÕÉ«=²»ÉÁ£¨0£©ºÚµ×£¨000£©ÁÁ°××Ö£¨1111£©
+	mov bp, pkinstr	; BP=´®µØÖ·
+	mov cx, pkinstrlen; CX=´®³¤
+	mov dl, 0		; ÁÐºÅ=0
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; µÈ´ýÓÃ»§°´¼ü
+	mov ah, 0		; ¹¦ÄÜºÅ£¨½ÓÊÜ¼üÅÌ×Ö·ûÊäÈë£©
+	int 16h			; µ÷ÓÃ16h¼üÅÌÖÐ¶Ï
 	
-	call newline	; å›žè½¦æ¢è¡Œ
-	ret				; ä»Žä¾‹ç¨‹è¿”å›ž
+	call newline	; »Ø³µ»»ÐÐ
+	ret				; ´ÓÀý³Ì·µ»Ø
 
-pkinstr db 'Press any key to continue!' ; æç¤ºç”¨æˆ·é”®å…¥çš„ä¸²
-pkinstrlen equ $ - pkinstr ; ä¸²é•¿
+pkinstr db 'Press any key to continue!' ; ÌáÊ¾ÓÃ»§¼üÈëµÄ´®
+pkinstrlen equ $ - pkinstr ; ´®³¤
 
 ;--------------------------------------------------------------------
-; å¤§åž‹è¾…åŠ©ä¾‹ç¨‹ç»“æŸ
+waitforkey_chin: ; °´ÈÎÒâ¼ü¼ÌÐø
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	inc dh
+	; ÏÔÊ¾ÌáÊ¾´®
+	mov ah, 42h 	; BIOSÖÐ¶ÏµÄ¹¦ÄÜºÅ£¨ÏÔÊ¾×Ö·û´®£©
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bh, 0 		; Ò³ºÅ=0
+	mov bl, 0fh 	; ×Ö·ûÑÕÉ«=²»ÉÁ£¨0£©ºÚµ×£¨000£©ÁÁ°××Ö£¨1111£©
+	mov bp, pkinstr_chin	; BP=´®µØÖ·
+	mov cx, pkinstrlen_chin; CX=´®³¤
+	mov dl, 0		; ÁÐºÅ=0
+	int 21h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	; µÈ´ýÓÃ»§°´¼ü
+	mov ah, 0		; ¹¦ÄÜºÅ£¨½ÓÊÜ¼üÅÌ×Ö·ûÊäÈë£©
+	int 16h			; µ÷ÓÃ16h¼üÅÌÖÐ¶Ï
+	
+	call newline	; »Ø³µ»»ÐÐ
+	ret				; ´ÓÀý³Ì·µ»Ø
+
+pkinstr_chin db '°´ÈÎÒâ¼ü¼ÌÐø'
+pkinstrlen_chin equ ($ - pkinstr_chin)/2 ; ´®³¤
+;--------------------------------------------------------------------
+;----------------------------------------------------------------------------
+; º¯ÊýÃû£ºReadSector
+;----------------------------------------------------------------------------
+; ×÷ÓÃ£º´ÓµÚ AX¸öÉÈÇø¿ªÊ¼£¬½«CL¸öÉÈÇø¶ÁÈëES:BXÖÐ
+ReadSector:
+	; -----------------------------------------------------------------------
+	; ÔõÑùÓÉÉÈÇøºÅÇóÉÈÇøÔÚ´ÅÅÌÖÐµÄÎ»ÖÃ (ÉÈÇøºÅ->ÖùÃæºÅ¡¢ÆðÊ¼ÉÈÇø¡¢´ÅÍ·ºÅ)
+	; -----------------------------------------------------------------------
+	; ÉèÉÈÇøºÅÎª x
+	;                           ©° ÖùÃæºÅ = y >> 1
+	;       x           ©° ÉÌ y ©È
+	;   -------------- 	=> ©È      ©¸ ´ÅÍ·ºÅ = y & 1
+	;  Ã¿´ÅµÀÉÈÇøÊý     ©¦
+	;                   ©¸ Óà z => ÆðÊ¼ÉÈÇøºÅ = z + 1
+	push bp
+	mov	bp, sp
+	sub	sp, 2 		; ±Ù³öÁ½¸ö×Ö½ÚµÄ¶ÑÕ»ÇøÓò±£´æÒª¶ÁµÄÉÈÇøÊý: byte [bp-2]
+	mov	byte [bp-2], cl
+	push bx			; ±£´æBX
+	mov	bl, [BPB_SecPerTrk]	; BLÎª³ýÊý
+	div	bl			; AX/BL£¬ÉÌyÔÚALÖÐ¡¢ÓàÊýzÔÚAHÖÐ
+	inc	ah			; z ++£¨Òò´ÅÅÌµÄÆðÊ¼ÉÈÇøºÅÎª1£©
+	mov	cl, ah		; CL <- ÆðÊ¼ÉÈÇøºÅ
+	mov	dh, al		; DH <- y
+	shr	al, 1			; y >> 1 £¨µÈ¼ÛÓÚy/BPB_NumHeads£¬ÈíÅÌÓÐ2¸ö´ÅÍ·£©
+	mov	ch, al		; CH <- ÖùÃæºÅ
+	and	dh, 1		; DH & 1 = ´ÅÍ·ºÅ
+	pop	bx			; »Ö¸´BX
+	; ÖÁ´Ë£¬"ÖùÃæºÅ¡¢ÆðÊ¼ÉÈÇø¡¢´ÅÍ·ºÅ"ÒÑÈ«²¿µÃµ½
+	mov	dl, 0; Çý¶¯Æ÷ºÅ£¨0±íÊ¾ÈíÅÌA£©
+.GoOnReading:
+	mov	ah, 2			; ¶ÁÉÈÇø
+	mov	al, byte [bp-2]	; ¶ÁAL¸öÉÈÇø
+	int	13h			; ´ÅÅÌÖÐ¶Ï
+	jc	.GoOnReading; Èç¹û¶ÁÈ¡´íÎó£¬CF»á±»ÖÃÎª1£¬
+					; ÕâÊ±¾Í²»Í£µØ¶Á£¬Ö±µ½ÕýÈ·ÎªÖ¹
+	add	sp, 2			; Õ»Ö¸Õë+2
+	pop	bp
+
+	ret
+;----------------------------------------------------------------------------
+; ´óÐÍ¸¨ÖúÀý³Ì½áÊø
+; -------------------------------------------------------------------
+getstrln0: ; »ñÈ¡¼üÅÌÊäÈëµÄÃüÁî´®ÐÐ
+	cld				; Çå³ý·½Ïò±êÖ¾Î»£¨Ê¹É¨Ãè×Ö·û´®·½ÏòÎª´Ó´®Ê×µ½´®Î²£©
+	
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äbuf
+	mov cx, buflen	; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøbufµÄ³¤¶È£¨buflen=80£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, buf		; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äfnbufµÄÇ°8¸ö×Ö½Ú
+	mov cx, cslen	; Ñ­»·´ÎÊýCX=ÃüÁî´®×î´óµÄ³¤¶È£¨cslen=8£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, fnbuf	; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	
+	mov si, 0		; µ±Ç°×Ö·ûÆ«ÒÆÎ»ÖÃ SI = 0
+keyin0: ; ½ÓÊÜ¼üÅÌÊäÈë
+	; ¶Á°´¼ü£¨·µ»ØµÄ°´¼üASCIIÂëÔÚALÖÐ£©
+	mov ah, 0 		; ¹¦ÄÜºÅ
+	int 16h 		; µ÷ÓÃ16HºÅÖÐ¶Ï
+	; ¶Ô»Ø³µ·û£¨0DH£©½áÊøÊäÈë
+	cmp al, 0dh 	; ±È½ÏALÖÐµÄ¼üÈë×Ö·ûÓë»Ø³µ·û£¨ASCIIÂëÎª0DH£©
+	je return0 		; ÏàµÈÌø×ªµ½´ÓÀý³Ì·µ»Ø
+	cmp al, 08h
+	je backspace0
+	; ±£´æ°´¼ü×Ö·ûµ½buf
+	mov [buf + si], al; buf[SI]=AL
+	inc si			; SI++
+	; Ì«³¤Ê±Ìø³ö
+	cmp si, 21	; SI >= 80 ?
+	jae goout0		; >= Ê±Ìø×ª
+	jmp next_k0
+	
+backspace0:
+	cmp si,0        ;Ã»ÓÐÊäÈëµÄ×Ö·ûÌø×ª¼ÌÐøÊäÈë
+	je keyin0
+	
+	dec si
+	mov byte [buf + si], 20h; ÌîÈë¿Õ¸ñ
+	
+	; ÏÔÊ¾×Ö·û´®Àý³Ì£¨ÐèÏÈÖÃ´®³¤CXºÍ´®µØÖ·BP£©
+	; »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ£¨·µ»ØµÄÐÐÁÐºÅ·Ö±ðÔÚDHºÍDLÖÐ£©
+	pusha
+	mov cx,1       ; ´®³¤1
+	mov bp,blank   ; ´®µØÖ·
+	push cx			; ±£»¤CX£¨½øÕ»£©
+	mov ah, 3		; ¹¦ÄÜºÅ
+	mov bh, 0		; µÚ0Ò³
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	pop cx			; »Ö¸´CX£¨³öÕ»£©
+	;10	2	ÖÃ¹â±êÎ»ÖÃ	BH=Ò³ºÅ
+    ;DH,DL=ÐÐ,ÁÐ
+	
+	dec dl          ; ÍË¸ñ
+	push dx
+	mov ah,2
+	mov bh,0
+	int 10h
+	pop dx
+	;dec dl          ; ÔÙÍËÒ»¸ñ
+	; ÔÚµ±Ç°Î»ÖÃÏÔÊ¾×Ö·û´®£¨´®³¤CXºÍ´®µØÖ·BPÒÑÔ¤ÏÈÉèÖÃºÃÁË£©
+	mov ah, 13h		; BIOSÖÐ¶ÏµÄ¹¦ÄÜºÅ£¨ÏÔÊ¾×Ö·û´®£©
+	mov al, 1 		; ¹â±ê·Åµ½´®Î²
+	mov bh, 0 		; Ò³ºÅ=0
+	mov bl, 0fh		; ×Ö·ûÑÕÉ«=²»ÉÁ£¨0£©ºÚµ×£¨000£©ÁÁ°××Ö£¨1111£©
+	int 10h 		; µ÷ÓÃ10HºÅÏÔÊ¾ÖÐ¶Ï
+	
+	push dx
+	mov ah,2
+	mov bh,0
+	int 10h
+	pop dx	
+	popa
+	jmp keyin0
+	; ÏÔÊ¾ALÖÐµÄ¼üÈë×Ö·û
+return0:
+	ret 			; ´ÓÀý³Ì·µ»Ø
+	
+next_k0
+	pusha
+	mov al,'*'
+	mov ah, 0eh 	; ¹¦ÄÜºÅ
+	mov bh,0
+	mov bl, 0fh 	; ÁÁ°××Ö
+	int 10h 		; µ÷ÓÃ10HºÅÖÐ¶Ï
+	popa
+	jmp keyin0		; Ñ­»·¶Á´æÏÔ°´¼ü
+	
+goout0:
+	
+	mov dh,16
+	mov dl,17
+	mov ah,2
+	mov bh,0
+	int 10h
+	
+	mov bl,0fh
+	mov bp,longPass
+	mov cx,longPasslen
+	call DispStr_Chinese
+	
+	add sp,2
+	jmp again_pass
+;
+SignIn:
+	call cls
+	call drawSignUp
+	
+	mov dh,0
+	mov dl,0
+	mov ah,2
+	mov bh,0
+	int 10h
+
+	mov bl,0fh
+	mov bp,OSver_str1
+	mov cx,OSver_str1_len
+	call DispStr_Chinese         ;ÏÔÊ¾´óÅÚ
+	
+	
+	mov dh,25
+	mov dl,2
+	mov ah,2
+	mov bh,0
+	int 10h
+
+	mov bl,0fh
+	mov bp,OSver_str1
+	mov cx,OSver_str1_len
+	call DispStr_Chinese         ;ÏÔÊ¾´óÅÚ
+	
+	mov ah,3
+	mov bh,0
+	int 10h
+	mov ah,2
+	mov bh,0
+	inc dl
+	int 10h
+	
+	mov bp,OSver_str2
+	mov cx,OSver_str2_len
+	call DispStr 				 ;ÏÔÊ¾OSÐÅÏ¢
+	
+	mov dh,13
+	mov dl,9
+	mov ah,2
+	mov bh,0
+	int 10h
+	mov bp,UserNameBuf
+	mov cx,[UserNameBufLen]
+	call DispStr
+
+	mov dh,16
+	mov dl,5
+	mov ah,2
+	mov bh,0
+	int 10h
+	mov bp,keyinPass
+	mov cx,keyinPasslen
+	call DispStr_Chinese          ;ÏÔÊ¾ÇëÊäÈëÃÜÂë
+	xor ah,ah
+	int 16h
+again_pass	
+	mov dh,16
+	mov dl,10
+	mov ah,2
+	mov bh,0
+	int 10h
+	mov bp,spaceStr
+	mov cx,21
+	call DispStr
+	mov dh,16
+	mov dl,10
+	mov ah,2
+	mov bh,0
+	int 10h
+	call getstrln0
+	call CopyPassword
+	;Ð£ÑéÃÜÂë
+	mov si,passwordBuf
+	mov di,passwordStr
+	mov	cx, 16			; ³õÊ¼Ñ­»·´ÎÊýÎª4 pinÂë
+	repe cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	cmp	cx, 0
+	jnz .wrong
+	jmp .out
+.wrong
+	mov dh,16
+	mov dl,17
+	mov ah,2
+	mov bh,0
+	int 10h
+	mov bl,0fh
+	mov bp,wrongPass
+	mov cx,wrongPasslen
+	call DispStr_Chinese
+	jmp again_pass
+.out:	
+	mov dh,16
+	mov dl,17
+	mov ah,2
+	mov bh,0
+	int 10h
+	mov bl,0fh
+	mov bp,welcomePass
+	mov cx,welcomePasslen
+	call DispStr_Chinese
+	call cls
+	ret
+keyinPass db 'ÇëÊäÈëÃÜÂë'
+keyinPasslen equ ($-keyinPass)/2
+
+longPass db 'ÃÜÂëÌ«³¤'
+longPasslen equ ($-longPass)/2
+welcomePass db '»¶Ó­Ê¹ÓÃ'
+welcomePasslen equ ($-welcomePass)/2	
+wrongPass db 'ÃÜÂë´íÎó'
+wrongPasslen equ ($-wrongPass)/2
+spaceStr:    db '                        '
+passwordBuf: db '                        '
+passwordStr: db '1997                    '
+; ------------------------------------------------------------------
+CopyPassword:	    ; ¹¹ÔìÐÂ´®£¨ÃüÁî´® --> ÃÜÂë£©
+	mov si, buf		; Ô´´®ÆðÊ¼µØÖ·
+	mov di, passwordBuf	; Ä¿µÄ´®ÆðÊ¼µØÖ·
+	mov cx, 21		; Ñ­»·´ÎÊý CX = n
+	; ½«ÊäÈë»º³åÇøbufÖÐµÄÃüÁî´®¸´ÖÆµ½ÎÄ¼þÃû»º³åÇøfnbuf£º
+	rep movsb		; CX > 0Ê± [ES:DI] = [DS:SI]¡¢CX--£¬CX = 0Ê±ÍË³öÑ­»·
+	
+	ret 			; ´ÓÀý³Ì·µ»Ø
+	
+passwordStr_temp1 db '                        '
+passwordStr_temp2 db '                        '
+; ===============================================================================
+;-------------------------------------------------------------------------------
+; ¸Ä±äÓÃ»§ÃÜÂë
+;ÌáÊ¾´®
+PleaseEnterPassStr db 'ÇëÊäÈëÃÜÂë'
+PleaseEnterPassStrLen equ ($-PleaseEnterPassStr)/2
+PleaseEnterPassStr0 db 'ÔÙ´ÎÊäÈëÃÜÂëÒÔÈ·ÈÏ'
+PleaseEnterPassStrLen0 equ ($-PleaseEnterPassStr0)/2
+PleaseEnterPassStr1 db 'Á½´ÎÃÜÂë²»Ò»ÖÂ£¬ÇëÖØÐÂÊäÈë'
+PleaseEnterPassStrLen1 equ ($-PleaseEnterPassStr1)/2
+ChangePassword:
+;¿ÉÄÜ±ä¶¯µÄÊý¾Ý
+;passwordStr: db '1997                    '
+;UserNameBuf db 'Liao Weiming                         '
+;UserNameBufLen dw 13
+again_setpass
+	mov di,passwordStr_temp1
+	mov cx,16
+	mov al,20h
+	rep lodsb 
+	mov di,passwordStr_temp2
+	mov cx,16
+	mov al,20h
+	rep lodsb 
+	mov bp,PleaseEnterPassStr
+	mov cx,PleaseEnterPassStrLen
+	call DispStr_Chinese          ;ÏÔÊ¾ÇëÊäÈëÃÜÂë1
+	call newline
+	;»ñÈ¡ÃÜÂë1
+	call getstrln0
+	call CopyPassword
+	;¸´ÖÆµ½passwordStr_temp1
+	mov si,passwordBuf
+	mov di,passwordStr_temp1
+	mov cx,16
+	rep movsb
+	
+	mov ah,3
+	mov bh,0
+	int 10h
+	mov ah,2
+	mov bh,0
+	inc dh
+	mov dl,0
+	int 10h
+	
+	mov bp,PleaseEnterPassStr0
+	mov cx,PleaseEnterPassStrLen0
+	call DispStr_Chinese          ;ÏÔÊ¾ÇëÊäÈëÃÜÂë2
+	call newline
+	;»ñÈ¡ÃÜÂë2
+	call getstrln0
+	call CopyPassword
+	;¸´ÖÆµ½passwordStr_temp2
+	mov si,passwordBuf
+	mov di,passwordStr_temp2
+	mov cx,16
+	rep movsb
+	
+	
+	;Ð£ÑéÃÜÂë
+	mov si,passwordStr_temp1
+	mov di,passwordStr_temp2
+	mov	cx, 16			; ³õÊ¼Ñ­»·´ÎÊýÎª4 pinÂë
+	rep cmpsb			; ÖØ¸´±È½Ï×Ö·û´®ÖÐµÄ×Ö·û£¬CX--£¬Ö±µ½²»ÏàµÈ»òCX=0
+	cmp	cx, 0
+	jnz .wrong
+	jmp .out
+.wrong
+	mov ah,3
+	mov bh,0
+	int 10h
+	mov ah,2
+	mov bh,0
+	inc dh
+	mov dl,0
+	int 10h
+	mov bp,PleaseEnterPassStr1
+	mov cx,PleaseEnterPassStrLen1
+	call DispStr_Chinese          ;ÏÔÊ¾´íÎóÐÅÏ¢
+	mov ah,3
+	mov bh,0
+	int 10h
+	mov ah,2
+	mov bh,0
+	inc dh
+	mov dl,0
+	int 10h
+	jmp again_setpass
+.out
+	mov si,passwordStr_temp1
+	mov di,passwordStr
+	mov	cx, 16			; ÉèÖÃÐÂÃÜÂë
+	rep movsb
+	
+	add sp,2
+	call SignIn
+	jmp again
+;-------------------------------------------------------------------------------
+; ¸Ä±äÓÃ»§Ãû
+;ÌáÊ¾´®
+PleaseEnterUserNameStr db 'ÇëÊäÈëÐÂµÄÓÃ»§Ãû'
+PleaseEnterUserNameStrLen equ ($-PleaseEnterUserNameStr)/2
+ChangeUserName:
+	pusha
+	; ÓÃ¿Õ¸ñ·û£¨20h£©Ìî³äUserNameBuf
+	mov cx, 16	; Ñ­»·´ÎÊýCX=ÃüÁîÐÐ»º³åÇøbufµÄ³¤¶È£¨buflen=80£©
+	mov al, 20h		; AL=ÒªÌî³äµÄ¿Õ¸ñ·ûASCIIÂë
+	mov di, UserNameBuf		; ES:DI=×Ö·û´®µÄÆðÊ¼µØÖ·
+	rep stosb		; CX>0Ê±½«AL´æ´¢µ½[ES:DI]£¬CX--¡¢DI++
+	
+	mov cx,buflen
+	mov bp,buf
+	add bp,5   ;Ìø¹ýcuser  Îå¸ö×Ö·û
+	;cmp byte[bp],' '
+	;jz ChangeUserEnd
+	
+
+	mov di,UserNameBuf
+	cld
+	mov cx,16
+	mov si,bp
+	rep movsb
+	stosb
+ChangeUserEnd:
+	popa
+	add sp,2
+	jmp again
+;--------------------------------------------------------------------
+
+; ===================================================================
+;Í¼ÐÎ¸¨Öúº¯Êý
+a_x dw 0
+a_y dw 0
+b_x dw 0
+b_y dw 0
+c_x dw 0
+c_y dw 0
+OSver_str1 db '´óÅÚ'
+OSver_str1_len equ ($ - OSver_str1)/2
+OSver_str2 db 'OS 12.1'
+OSver_str2_len equ $ - OSver_str2
+UserNameBuf db 'Liao Weiming                         '
+UserNameBufLen dw 16
+
+drawSignUp:
+	mov bx,0
+	mov dx,20*32-1
+	mov ax,17
+	mov cx,0
+	call drawLine
+
+	call _dc      ;ÏÔÊ¾ÊµÊ±Ê±ÖÓ
+	mov word[a_x],2*32
+	mov word[a_y],(15-9)*32
+	mov word[b_x],8*32
+	mov word[b_y],(15-9)*32
+	mov word[c_x],2*32
+	mov word[c_y],(15-6)*32
+	call drawRectangle
+	
+	
+	mov word[a_x],2*32+8
+	mov word[a_y],(15-7)*32-8
+	mov word[b_x],8*32-8
+	mov word[b_y],(15-7)*32-8
+	mov word[c_x],2*32+8
+	mov word[c_y],(15-6)*32-8
+	call drawRectangle
+	
+    ret
+drawRectangle: ;»­¾ØÐÎ ÏÈºópushÈý¸ö½Ç
+	mov bx,[a_x]
+	mov dx,[b_x]
+	mov ax,[a_y]
+	mov cx,0
+	call drawLine
+	
+	mov bx,[a_x]
+	mov dx,[b_x]
+	mov ax,[c_y]
+	mov cx,0
+	call drawLine
+	
+	mov dx,[c_y]
+	mov bx,[a_y]
+	mov ax,[a_x]
+	mov cx,1
+	call drawLine
+	
+	mov dx,[c_y]
+	mov bx,[a_y]
+	mov ax,[b_x]
+	mov cx,1
+	call drawLine
+	ret
+drawLine:      ;ÆðÊ¼×ø±ê BX  ½áÊø×ø±ê DX  ²»±ä×ø±ê AX  CX»®Ïß·½Ïò 0Ë®Æ½ 1ÊúÖ±
+	pusha
+	cmp cx,0
+	jz drawRow
+drawCol:
+	sub dx,bx
+	mov cx,dx
+.1:
+	push cx
+	mov cx,ax
+	mov dx,bx
+	call drawPixel
+	inc bx
+	pop cx
+	loop .1
+	jmp out__
+drawRow:
+	sub dx,bx
+	mov cx,dx
+.2:
+	push cx
+	mov dx,ax
+	mov cx,bx
+	call drawPixel
+	inc bx
+	pop cx
+	loop .2
+out__:
+	popa
+	ret
+	
+drawPixel:     ;X=CX   Y=DX
+	pusha
+	mov ax,0c0fh
+	mov bh,0
+	int 10h
+	popa
+	ret
 ; ===================================================================
