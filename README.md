@@ -37,7 +37,7 @@
 食用说明：
 1) 主程序
 * 逻辑框图
-
+![image](https://github.com/SteiensGate/MyOS/master/picture/3-1-1.png)
 图3-1-1 cmd主要流程（放大可看清）开机动画在Int213dh中调用
 
 * 运行界面
